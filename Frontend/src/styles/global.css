@@ -1,0 +1,147 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
+
+:root {
+  /* ===== CORES ===== */
+
+  --bg-color: #050913;
+  --card-bg-color: #141b2d;
+
+  --accent-cyan: #00e0ff;
+  --accent-cyan-hover: #33e8ff;
+
+  --text-primary: #ffffff;
+  --text-secondary: #a0b3d0;
+
+  --border-glow: rgba(0, 224, 255, 0.45);
+  --shadow-color: rgba(0, 0, 0, 0.35);
+
+  --input-bg: rgba(13, 20, 36, 0.85);
+
+  --success: #22c55e;
+  --warning: #facc15;
+  --danger: #ef4444;
+
+  /* ===== LAYOUT ===== */
+
+  --container: 1280px;
+
+  --header-height: 72px;
+
+  /* ===== BORDAS ===== */
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+
+  /* ===== TRANSIÇÕES ===== */
+
+  --transition: .25s ease;
+
+  /* ===== SOMBRAS ===== */
+
+  --shadow-sm: 0 8px 20px rgba(0, 0, 0, .20);
+  --shadow-md: 0 12px 30px rgba(0, 0, 0, .28);
+  --shadow-lg: 0 18px 45px rgba(0, 0, 0, .35);
+
+  /* ===== GLOW ===== */
+
+  --glow:
+    0 0 10px rgba(0, 224, 255, .15),
+    0 0 25px rgba(0, 224, 255, .08);
+}
+
+/* ===== RESET ===== */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ===== BASE ===== */
+
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--bg-color);
+  color: var(--text-primary);
+
+  font-family: "Inter", sans-serif;
+
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  overflow-x: hidden;
+}
+
+/* ===== ELEMENTOS ===== */
+
+img,
+picture,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+  border: none;
+  outline: none;
+  background: transparent;
+}
+
+button {
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+::selection {
+  background: var(--accent-cyan);
+  color: var(--bg-color);
+}
+
+/* ===== SCROLLBAR ===== */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-cyan);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-cyan-hover);
+}

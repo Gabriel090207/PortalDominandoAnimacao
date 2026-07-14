@@ -1,0 +1,308 @@
+.library-page {
+    margin-left: 280px;
+
+    min-height: 100vh;
+
+    padding: 28px 36px 40px;
+
+    background:
+        radial-gradient(circle at top,
+            rgba(0,224,255,.05),
+            transparent 30%),
+        radial-gradient(circle at right,
+            rgba(43,127,255,.04),
+            transparent 40%),
+        var(--bg-color);
+}
+
+/* TOPBAR */
+
+.library-page__topbar {
+    display: flex;
+    justify-content: flex-end;
+
+
+}
+
+.library-page__actions {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+}
+
+.library-page__status {
+    width: 12px;
+    height: 12px;
+
+    border-radius: 50%;
+
+    background: #ffae00;
+
+    box-shadow:
+        0 0 14px rgba(255,174,0,.45);
+}
+
+.library-page__icon {
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: var(--text-secondary);
+
+    border-radius: 50%;
+
+    transition: .25s;
+}
+
+.library-page__icon:hover {
+    color: white;
+
+    background: rgba(255,255,255,.03);
+}
+
+/* HERO */
+
+.library-page__hero {
+    margin-bottom: 34px;
+}
+
+.library-page__hero h1 {
+    color: white;
+
+    font-size: 2.5rem;
+    font-weight: 700;
+
+    margin-bottom: 10px;
+}
+
+.library-page__hero p {
+    color: var(--text-secondary);
+
+    font-size: 1rem;
+}
+
+/* FILTER */
+
+.library-filter {
+    display: flex;
+    align-items: center;
+
+    gap: 6px;
+
+    width: fit-content;
+
+    margin-bottom: 90px;
+
+    padding: 6px;
+
+    border-radius: 22px;
+
+    border: 1px solid rgba(255,255,255,.06);
+
+    background: rgba(255,255,255,.02);
+}
+
+.library-filter button {
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    padding: 0 22px;
+
+    color: var(--text-secondary);
+
+    font-size: .95rem;
+    font-weight: 600;
+
+    border-radius: 16px;
+
+    transition: .25s;
+}
+
+.library-filter button svg {
+    width: 17px;
+    height: 17px;
+}
+
+.library-filter button:hover {
+    color: white;
+}
+
+.library-filter button.active {
+    color: white;
+
+    background:
+        linear-gradient(
+            135deg,
+            #00bfff,
+            #2468ff
+        );
+
+    box-shadow:
+        0 10px 24px rgba(0,191,255,.22);
+}
+
+/* EMPTY */
+
+.library-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    text-align: center;
+
+    padding: 70px 20px;
+}
+
+.library-empty__icon {
+    width: 78px;
+    height: 78px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 26px;
+
+    color: var(--accent-cyan);
+
+    border-radius: 22px;
+
+    border: 1px solid rgba(255,255,255,.06);
+
+    background: rgba(255,255,255,.02);
+
+    box-shadow:
+        0 10px 24px rgba(0,0,0,.25);
+}
+
+.library-empty h2 {
+    color: white;
+
+    font-size: 2rem;
+
+    margin-bottom: 12px;
+}
+
+.library-empty p {
+    color: var(--text-secondary);
+
+    font-size: 1rem;
+}
+
+
+
+
+/* ==========================================
+   RESPONSIVO MOBILE
+========================================== */
+
+@media (max-width: 768px) {
+
+    .library-page {
+        margin-left: 0;
+
+        min-height: 100vh;
+
+        padding:
+            calc(72px + 24px)
+            20px
+            calc(74px + 30px)
+            20px;
+    }
+
+    .library-page__topbar {
+        display: none;
+    }
+
+    .library-page__hero {
+        margin-bottom: 24px;
+    }
+
+    .library-page__hero h1 {
+        font-size: 2rem;
+
+        line-height: 1.2;
+    }
+
+    .library-page__hero p {
+        font-size: .95rem;
+
+        line-height: 1.6;
+    }
+
+    .library-filter {
+        width: 100%;
+
+        display: flex;
+
+        overflow-x: auto;
+
+        gap: 8px;
+
+        margin-bottom: 50px;
+
+        padding: 5px;
+
+        border-radius: 18px;
+
+        scrollbar-width: none;
+    }
+
+    .library-filter::-webkit-scrollbar {
+        display: none;
+    }
+
+    .library-filter button {
+        flex-shrink: 0;
+
+        height: 44px;
+
+        padding: 0 18px;
+
+        white-space: nowrap;
+
+        font-size: .85rem;
+
+        border-radius: 14px;
+    }
+
+    .library-filter button svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .library-empty {
+        padding: 60px 10px;
+    }
+
+    .library-empty__icon {
+        width: 64px;
+        height: 64px;
+
+        margin-bottom: 18px;
+
+        border-radius: 16px;
+    }
+
+    .library-empty h2 {
+        font-size: 1.5rem;
+
+        line-height: 1.3;
+    }
+
+    .library-empty p {
+        font-size: .95rem;
+
+        line-height: 1.6;
+    }
+
+}
