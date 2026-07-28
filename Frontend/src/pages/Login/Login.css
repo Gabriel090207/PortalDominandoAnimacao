@@ -2,9 +2,10 @@
   position: relative;
 
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
 
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 
   display: flex;
   align-items: center;
@@ -849,4 +850,178 @@
   html {
     scroll-behavior: auto;
   }
+}
+
+
+
+.login-telegram-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  background: rgba(4, 8, 18, 0.72);
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  animation: loginTelegramOverlayFade .25s ease;
+}
+
+@keyframes loginTelegramOverlayFade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.login-telegram-modal__content {
+  position: relative;
+
+  width: 100%;
+  max-width: 430px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  padding: 32px;
+
+  border: 1px solid rgba(160, 179, 208, 0.13);
+  border-radius: 22px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(20, 27, 45, 0.92),
+      rgba(8, 13, 25, 0.96)
+    );
+
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(0, 224, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+
+  animation: loginTelegramModalEntry .3s ease;
+}
+
+@keyframes loginTelegramModalEntry {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.login-telegram-modal__header {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 28px;
+}
+
+.login-telegram-modal__header h3 {
+  margin: 0;
+
+  color: var(--text-primary);
+
+  font-size: 1.2rem;
+  font-weight: 650;
+  letter-spacing: -.02em;
+}
+
+
+.login-telegram-modal__close {
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: var(--text-secondary);
+
+  border: 1px solid rgba(160, 179, 208, .12);
+  border-radius: 10px;
+
+  background: rgba(255, 255, 255, .03);
+
+  transition:
+    color var(--transition),
+    background var(--transition),
+    border-color var(--transition),
+    transform var(--transition);
+}
+
+.login-telegram-modal__close:hover {
+  color: var(--accent-cyan);
+
+  background: rgba(0, 224, 255, .08);
+
+  border-color: rgba(0, 224, 255, .18);
+
+  transform: rotate(90deg);
+}
+
+.login-telegram-modal__close:active {
+  transform: scale(.95);
+}
+
+.login-telegram-modal__body {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+.login-telegram-modal__description {
+  max-width: 390px;
+
+  margin: 0 0 18px;
+
+  color: var(--text-secondary);
+
+  font-size: .82rem;
+  line-height: 1.6;
+  text-align: left;
+}
+
+
+.login-telegram-modal__qr {
+  display: block;
+
+  width: 460px;
+  height: 360px;
+
+  padding: 14px;
+
+  border-radius: 20px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, .35),
+    0 0 30px rgba(0, 224, 255, .12);
+
+  user-select: none;
 }

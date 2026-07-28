@@ -5,12 +5,35 @@ import {
   Send,
   Sparkles,
 } from "lucide-react";
+
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import { getTelegramLogin } from "../../services/telegramservice";
+
+import TelegramLoginButton from "../../components/TelegramLoginButton/TelegramLoginButton";
 
 import "./Login.css";
 
 const Login = () => {
-  const navigate = useNavigate();
+const navigate = useNavigate();
+
+const [isLoadingTelegramLogin, setIsLoadingTelegramLogin] = useState(false);
+const [telegramUsername, setTelegramUsername] = useState("");
+
+const handleOpenTelegramLogin = async () => {
+  setIsLoadingTelegramLogin(true);
+
+  try {
+    const { bot_username } = await getTelegramLogin();
+
+    setTelegramUsername(bot_username);
+  } catch (error) {
+    console.error("Erro ao iniciar login:", error);
+  } finally {
+    setIsLoadingTelegramLogin(false);
+  }
+};
 
   return (
     <main className="login-page">
@@ -55,22 +78,40 @@ const Login = () => {
             Entre com o Telegram ou receba um código pelo seu e-mail.
           </p>
 
-          <button
-            className="login-telegram-button"
-            type="button"
-            onClick={() => navigate("/dashboard")}
-          >
-            <Send size={20} strokeWidth={2.2} />
-
-            <span>Entrar com Telegram</span>
-
-            <ArrowRight
-              className="login-telegram-button__arrow"
-              size={19}
-              strokeWidth={2}
+          {telegramUsername ? (
+            <TelegramLoginButton
+              botUsername={telegramUsername}
+              onAuth={(user) => {
+                console.log("Usuário Telegram:", user);
+              }}
             />
-          </button>
+          ) : (
+            <button
+              className="login-telegram-button"
+              type="button"
+              onClick={handleOpenTelegramLogin}
+              disabled={isLoadingTelegramLogin}
+            >
+              {isLoadingTelegramLogin ? (
+                <>
+                  <span>Carregando Telegram...</span>
+                </>
+              ) : (
+                <>
+                  <Send size={20} strokeWidth={2.2} />
 
+                  <span>Entrar com Telegram</span>
+
+                  <ArrowRight
+                    className="login-telegram-button__arrow"
+                    size={19}
+                    strokeWidth={2}
+                  />
+                </>
+              )}
+            </button>
+          )}
+                      
           <div className="login-divider">
             <span className="login-divider__line" />
 
@@ -120,6 +161,8 @@ const Login = () => {
           <p className="login-card__notice">
             Acesso liberado apenas para assinantes com plano ativo.
           </p>
+
+          
         </section>
 
         <footer className="login-footer">
@@ -130,6 +173,7 @@ const Login = () => {
           <span>Dominando Animação</span>
         </footer>
       </section>
+
     </main>
   );
 };
