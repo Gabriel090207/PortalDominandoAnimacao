@@ -24,9 +24,13 @@ const handleOpenTelegramLogin = async () => {
   setIsLoadingTelegramLogin(true);
 
   try {
-    const { url } = await getTelegramLogin();
+    const response = await getTelegramLogin();
 
-    window.location.href = url;
+    console.log("RESPOSTA TELEGRAM:", response);
+
+    alert(response.url);
+
+    window.location.href = response.url;
 
   } catch (error) {
     console.error(
