@@ -1,18 +1,30 @@
 from fastapi import APIRouter
-
-from app.services.telegram.oauth import create_telegram_login_url
+from pydantic import BaseModel
 
 
 router = APIRouter(
     prefix="/telegram",
-    tags=["Telegram"],
+    tags=["Telegram"]
 )
 
 
-@router.get("/login")
-async def telegram_login():
-    url = create_telegram_login_url()
+class TelegramUser(BaseModel):
+    id: int
+    first_name: str
+    last_name: str | None = None
+    username: str | None = None
+    photo_url: str | None = None
+    auth_date: int
+    hash: str
+
+
+@router.post("/auth")
+async def telegram_auth(user: TelegramUser):
+
+    print("LOGIN TELEGRAM:")
+    print(user)
 
     return {
-        "url": url
+        "success": True,
+        "user": user
     }

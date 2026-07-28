@@ -29,3 +29,8 @@ TELEGRAM_BOT_USERNAME = os.getenv(
     "TELEGRAM_BOT_USERNAME",
     ""
 )
+
+TELEGRAM_BOT_ID = os.getenv(
+    "TELEGRAM_BOT_ID",
+    ""
+)

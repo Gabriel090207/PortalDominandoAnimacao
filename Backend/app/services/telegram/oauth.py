@@ -1,4 +1,7 @@
 from urllib.parse import urlencode
+import secrets
+import hashlib
+import base64
 
 from app.services.telegram.config import (
     TELEGRAM_CLIENT_ID,
@@ -8,17 +11,31 @@ from app.services.telegram.config import (
 
 def create_telegram_login_url():
 
-    params = {
-        "client_id": TELEGRAM_CLIENT_ID,
-        "origin": TELEGRAM_REDIRECT_URI,
-        "return_to": TELEGRAM_REDIRECT_URI,
-        "scope": "openid profile",
-        "response_type": "code",
-    }
+    state = secrets.token_urlsafe(32)
 
-    url = (
-        "https://oauth.telegram.org/auth/auth?"
-        + urlencode(params)
+    verifier = secrets.token_urlsafe(64)
+
+    challenge = (
+        base64.urlsafe_b64encode(
+            hashlib.sha256(
+                verifier.encode()
+            ).digest()
+        )
+        .decode()
+        .replace("=", "")
     )
 
-    return url
+    params = {
+        "client_id": TELEGRAM_CLIENT_ID,
+        "redirect_uri": TELEGRAM_REDIRECT_URI,
+        "response_type": "code",
+        "scope": "openid profile",
+        "state": state,
+        "code_challenge": challenge,
+        "code_challenge_method": "S256",
+    }
+
+    return (
+        "https://oauth.telegram.org/auth?"
+        + urlencode(params)
+    )
