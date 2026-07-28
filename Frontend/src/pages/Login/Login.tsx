@@ -11,10 +11,7 @@ import { useNavigate } from "react-router-dom";
 
 import {
   getTelegramLogin,
-  verifyTelegramLogin,
 } from "../../services/telegramservice";
-
-import TelegramLoginButton from "../../components/TelegramLoginButton/TelegramLoginButton";
 
 import "./Login.css";
 
@@ -22,18 +19,21 @@ const Login = () => {
 const navigate = useNavigate();
 
 const [isLoadingTelegramLogin, setIsLoadingTelegramLogin] = useState(false);
-const [telegramUsername, setTelegramUsername] = useState("");
 
 const handleOpenTelegramLogin = async () => {
   setIsLoadingTelegramLogin(true);
 
   try {
-    const { bot_username } = await getTelegramLogin();
+    const { url } = await getTelegramLogin();
 
-    setTelegramUsername(bot_username);
+    window.location.href = url;
+
   } catch (error) {
-    console.error("Erro ao iniciar login:", error);
-  } finally {
+    console.error(
+      "Erro ao iniciar login Telegram:",
+      error
+    );
+
     setIsLoadingTelegramLogin(false);
   }
 };
@@ -81,30 +81,7 @@ const handleOpenTelegramLogin = async () => {
             Entre com o Telegram ou receba um código pelo seu e-mail.
           </p>
 
-          {telegramUsername ? (
-            <TelegramLoginButton
-              botUsername={telegramUsername}
-              onAuth={async (user) => {
-                try {
-                  const response = await verifyTelegramLogin(user);
-
-                  console.log(
-                    "Login Telegram confirmado:",
-                    response
-                  );
-
-                  navigate("/dashboard");
-
-                } catch (error) {
-                  console.error(
-                    "Erro ao validar Telegram:",
-                    error
-                  );
-                }
-              }}
-            />
-          ) : (
-            <button
+          <button
               className="login-telegram-button"
               type="button"
               onClick={handleOpenTelegramLogin}
@@ -112,7 +89,10 @@ const handleOpenTelegramLogin = async () => {
             >
               {isLoadingTelegramLogin ? (
                 <>
-                  <span>Carregando Telegram...</span>
+                  <span className="login-telegram-loading">
+                    <span className="login-telegram-spinner" />
+                    Conectando ao Telegram...
+                  </span>
                 </>
               ) : (
                 <>
@@ -128,8 +108,7 @@ const handleOpenTelegramLogin = async () => {
                 </>
               )}
             </button>
-          )}
-                      
+                                
           <div className="login-divider">
             <span className="login-divider__line" />
 
