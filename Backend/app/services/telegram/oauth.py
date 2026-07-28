@@ -10,7 +10,9 @@ def create_telegram_login_url():
 
     params = {
         "bot_id": TELEGRAM_BOT_ID,
-        "origin": TELEGRAM_REDIRECT_URI,
+
+        "origin": "https://portaldominandoanimacao.netlify.app",
+
         "return_to": TELEGRAM_REDIRECT_URI,
     }
 
