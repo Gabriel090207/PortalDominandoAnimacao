@@ -30,7 +30,7 @@ const handleOpenTelegramLogin = async () => {
 
     window.open(
       url,
-      "_self"
+      "_blank"
     );
 
   } catch (error) {
