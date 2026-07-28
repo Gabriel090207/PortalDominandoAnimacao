@@ -9,7 +9,10 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { getTelegramLogin } from "../../services/telegramservice";
+import {
+  getTelegramLogin,
+  verifyTelegramLogin,
+} from "../../services/telegramservice";
 
 import TelegramLoginButton from "../../components/TelegramLoginButton/TelegramLoginButton";
 
@@ -81,8 +84,23 @@ const handleOpenTelegramLogin = async () => {
           {telegramUsername ? (
             <TelegramLoginButton
               botUsername={telegramUsername}
-              onAuth={(user) => {
-                console.log("Usuário Telegram:", user);
+              onAuth={async (user) => {
+                try {
+                  const response = await verifyTelegramLogin(user);
+
+                  console.log(
+                    "Login Telegram confirmado:",
+                    response
+                  );
+
+                  navigate("/dashboard");
+
+                } catch (error) {
+                  console.error(
+                    "Erro ao validar Telegram:",
+                    error
+                  );
+                }
               }}
             />
           ) : (
