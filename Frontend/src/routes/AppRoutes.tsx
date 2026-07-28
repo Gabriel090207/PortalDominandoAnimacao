@@ -1,8 +1,14 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+} from "react-router-dom";
 
 import MainLayout from "../layouts/MainLayout";
 
 import Login from "../pages/Login/Login";
+import TelegramCallback from "../pages/TelegramCallback/TelegramCallback";
 
 import Dashboard from "../pages/Dashboard/Dashboard";
 import Video from "../pages/Video/Video";
@@ -12,18 +18,28 @@ import Chat from "../pages/Chat/Chat";
 import Slides from "../pages/Slides/Slides";
 import Library from "../pages/Library/Library";
 
+
 const AppRoutes = () => {
   return (
     <BrowserRouter>
+
       <Routes>
 
-        {/* Login sem layout */}
+        {/* Login */}
         <Route
           path="/"
           element={<Login />}
         />
 
-        {/* Todas as páginas internas utilizam o MainLayout */}
+
+        {/* Retorno Telegram */}
+        <Route
+          path="/telegram/callback"
+          element={<TelegramCallback />}
+        />
+
+
+        {/* Área interna */}
         <Route element={<MainLayout />}>
 
           <Route
@@ -63,15 +79,24 @@ const AppRoutes = () => {
 
         </Route>
 
-        {/* Qualquer rota inexistente */}
+
+        {/* Qualquer rota inválida */}
         <Route
           path="*"
-          element={<Navigate to="/" replace />}
+          element={
+            <Navigate
+              to="/"
+              replace
+            />
+          }
         />
 
+
       </Routes>
+
     </BrowserRouter>
   );
 };
+
 
 export default AppRoutes;
