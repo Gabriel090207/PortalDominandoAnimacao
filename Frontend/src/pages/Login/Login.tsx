@@ -28,7 +28,10 @@ const handleOpenTelegramLogin = async () => {
 
     console.log("URL TELEGRAM:", url);
 
-    window.location.href = url;
+    window.open(
+      url,
+      "_self"
+    );
 
   } catch (error) {
     console.error(
