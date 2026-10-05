@@ -1,16 +1,18 @@
-"""Temporary diagnostics only: no authentication or commercial side effects."""
+"""Authenticated reception only; no persistence or commercial side effects."""
 import json
 import logging
-import re
+import hmac
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
 
 from fastapi import APIRouter, HTTPException, Request
 
 router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
-logger = logging.getLogger("uvicorn.error.kirvano_diagnostic")
+logger = logging.getLogger("uvicorn.error.kirvano")
 MAX_BODY_BYTES = 64 * 1024
-_HEADER_NAME = re.compile(r"[!#$%&'*+.^_`|~0-9a-z-]{1,128}\Z")
-_METADATA_VALUE = re.compile(r"[A-Z][A-Z0-9_]{0,63}\Z")
-_AUTH_MARKERS = ("auth", "token", "secret", "signature", "api-key", "apikey", "api_key", "cookie")
+_BACKEND_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _reject_json_constant(value: str):
@@ -18,9 +20,19 @@ def _reject_json_constant(value: str):
 
 
 @router.post("/kirvano")
-async def receive_kirvano_diagnostic(request: Request):
-    # Intentionally unauthenticated until Kirvano's token transport is confirmed.
-    # Never call persistence, grant access or send email from this diagnostic route.
+async def receive_kirvano(request: Request):
+    # Token transport confirmed by a real Kirvano request: security-token.
+    # Authentication does not grant access or trigger commercial processing.
+    load_dotenv(_BACKEND_ROOT / ".env", override=False)
+    expected = os.getenv("KIRVANO_WEBHOOK_TOKEN", "")
+    received = request.headers.getlist("security-token")
+    if (
+        not expected.strip()
+        or len(received) != 1
+        or not hmac.compare_digest(received[0].encode("utf-8"), expected.encode("utf-8"))
+    ):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
     media_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
     if media_type != "application/json" and not (
         media_type.startswith("application/") and media_type.endswith("+json")
@@ -33,27 +45,10 @@ async def receive_kirvano_diagnostic(request: Request):
             raise HTTPException(status_code=413, detail="Request body too large")
         body.extend(chunk)
     try:
-        payload = json.loads(body, parse_constant=_reject_json_constant)
+        json.loads(body, parse_constant=_reject_json_constant)
     except (ValueError, UnicodeError, RecursionError):
         raise HTTPException(status_code=400, detail="Invalid JSON") from None
 
-    # Header values never enter the log record. Unsafe names are omitted.
-    names = sorted({name.lower() for name in request.headers.keys() if _HEADER_NAME.fullmatch(name.lower())})
-    auth_names = [name for name in names if any(marker in name for marker in _AUTH_MARKERS)]
-    metadata = {
-        "method": "POST",
-        "path": "/webhooks/kirvano",
-        "body_bytes": len(body),
-        "header_names": names,
-        "auth_related_headers_present": bool(auth_names),
-        "auth_related_header_names": auth_names,
-    }
-    if isinstance(payload, dict):
-        for key in ("event", "type", "status"):
-            value = payload.get(key)
-            if isinstance(value, str):
-                # Only short enum-like labels; omit arbitrary strings/PII and log injection.
-                if _METADATA_VALUE.fullmatch(value):
-                    metadata[key] = value
-    logger.info("Kirvano diagnostic: %s", json.dumps(metadata, ensure_ascii=True))
+    # Fixed labels and measured size only: never log headers or payload fields.
+    logger.info("Kirvano webhook received: method=POST path=/webhooks/kirvano body_bytes=%d", len(body))
     return {"received": True}

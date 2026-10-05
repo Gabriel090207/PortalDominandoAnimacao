@@ -8,7 +8,13 @@ from app.api.kirvano import MAX_BODY_BYTES
 
 class KirvanoDiagnosticTests(unittest.TestCase):
     def setUp(self):
-        self.client = TestClient(app)
+        self.env_patch = patch.dict('os.environ', {'KIRVANO_WEBHOOK_TOKEN':'test-configured-secret'})
+        self.env_patch.start()
+        self.addCleanup(self.env_patch.stop)
+        loader = patch('app.api.kirvano.load_dotenv')
+        loader.start()
+        self.addCleanup(loader.stop)
+        self.client = TestClient(app, headers={'security-token':'test-configured-secret'})
 
     def test_valid_json(self):
         for payload in [{'test':True}, [], 'test', None]:
@@ -32,26 +38,45 @@ class KirvanoDiagnosticTests(unittest.TestCase):
     def test_logs_and_no_persistence(self):
         secrets=['Bearer secret-123','token-value-456','cookie-value-789','person@example.com','Private Buyer','555123456','private-document']
         payload={'event':'SALE_APPROVED','type':'RECURRING','status':'APPROVED','customer':{'email':secrets[3],'name':secrets[4],'phone':secrets[5],'document':secrets[6]}}
-        with patch('app.services.firebase_service.get_firestore_client',side_effect=AssertionError('Firebase must not be used')) as client, self.assertLogs('uvicorn.error.kirvano_diagnostic',level='INFO') as logs:
+        with patch('app.services.firebase_service.get_firestore_client',side_effect=AssertionError('Firebase must not be used')) as client, self.assertLogs('uvicorn.error.kirvano',level='INFO') as logs:
             response=self.client.post('/webhooks/kirvano',json=payload,headers={'Authorization':secrets[0],'x-unknown-token':secrets[1],'Cookie':secrets[2],'x-safe':'not-logged','x-bad name':'not-logged'})
         self.assertEqual(response.status_code,200)
         client.assert_not_called()
         output=' '.join(logs.output)
         for secret in secrets+['not-logged','x-bad name']:self.assertNotIn(secret,output)
-        metadata=json.loads(logs.records[0].args[0])
-        self.assertIn('authorization',metadata['header_names'])
-        self.assertIn('x-unknown-token',metadata['auth_related_header_names'])
-        self.assertTrue(metadata['auth_related_headers_present'])
-        self.assertEqual(metadata['event'],'SALE_APPROVED')
-        self.assertEqual(set(metadata),{'method','path','body_bytes','header_names','auth_related_headers_present','auth_related_header_names','event','type','status'})
+        self.assertNotIn('test-configured-secret',output)
+        self.assertNotIn('authorization',output.lower())
+        self.assertNotIn('cookie',output.lower())
+        self.assertNotIn('SALE_APPROVED',output)
+        self.assertIn('body_bytes=',output)
 
     def test_untrusted_labels_not_logged(self):
-        with self.assertLogs('uvicorn.error.kirvano_diagnostic',level='INFO') as logs:
+        with self.assertLogs('uvicorn.error.kirvano',level='INFO') as logs:
             self.client.post('/webhooks/kirvano',json={'event':'person@example.com','type':'line\nsecret','status':'x'*1000})
-        metadata=json.loads(logs.records[0].args[0])
-        self.assertNotIn('event',metadata)
-        self.assertNotIn('type',metadata)
-        self.assertNotIn('status',metadata)
+        for value in ['person@example.com','line','x'*1000]:
+            self.assertNotIn(value,' '.join(logs.output))
+
+    def test_invalid_authentication(self):
+        unauthenticated=TestClient(app)
+        for headers in [{}, {'security-token':'incorrect-received-secret'}, {'security-token':''}]:
+            with self.assertNoLogs('uvicorn.error.kirvano',level='INFO'):
+                response=unauthenticated.post('/webhooks/kirvano',json={},headers=headers)
+            self.assertEqual(response.status_code,401)
+            self.assertEqual(response.json(),{'detail':'Unauthorized'})
+
+    def test_missing_or_empty_configuration(self):
+        import os
+        for value in [None, '', '   ']:
+            with patch.dict(os.environ):
+                if value is None:os.environ.pop('KIRVANO_WEBHOOK_TOKEN',None)
+                else:os.environ['KIRVANO_WEBHOOK_TOKEN']=value
+                response=self.client.post('/webhooks/kirvano',json={})
+            self.assertEqual(response.status_code,401)
+            self.assertEqual(response.json(),{'detail':'Unauthorized'})
+
+    def test_duplicate_token_rejected(self):
+        response=TestClient(app).post('/webhooks/kirvano',json={},headers=[('security-token','test-configured-secret'),('security-token','test-configured-secret')])
+        self.assertEqual(response.status_code,401)
 
     def test_existing_routes(self):
         for path in ['/','/health','/openapi.json']:self.assertEqual(self.client.get(path).status_code,200)
