@@ -38,7 +38,7 @@ class CommercialTests(unittest.TestCase):
                *[('plan.charge_number',v,Reason.INVALID_CHARGE_NUMBER) for v in [None,'1',True,0,-1,1.0]],
                ('plan.charge_frequency','YEARLY',Reason.FREQUENCY_NOT_AUTHORIZED),
                ('type','ONE_TIME',Reason.TYPE_NOT_RECURRING),('status','PENDING',Reason.STATUS_NOT_APPROVED),
-               *[('event',v,Reason.EVENT_NOT_AUTHORIZED) for v in ['UNKNOWN','SUBSCRIPTION_CANCELED','SALE_REFUNDED','SALE_CHARGEBACK']],
+               *[('event',v,Reason.EVENT_NOT_AUTHORIZED) for v in ['UNKNOWN','SALE_REFUNDED','SALE_CHARGEBACK']],
                *[(field,v,reason) for field,reason in [('payment.finished_at',Reason.INVALID_PERIOD_START),('plan.next_charge_date',Reason.INVALID_PERIOD_END)] for v in [None,'bad','2026-10-05T12:00:00','2026-10-05 12:00:00+00:00','2026-2-05 12:00:00','2026-02-30 12:00:00']]]
         for path,value,reason in cases:
             with self.subTest(path=path,value=value):
@@ -137,3 +137,62 @@ class CommercialTests(unittest.TestCase):
         for field,value in [('id','other'),('offer_id','other'),('is_order_bump',True)]:
             data=payload();data['event']='SUBSCRIPTION_RENEWED';data['products'][0][field]=value
             self.assertEqual(classify(data).classification,State.REVIEW_REQUIRED)
+
+def cancellation_payload(charge=1):
+    data = payload()
+    data.update(event='SUBSCRIPTION_CANCELED', status='CANCELED')
+    data['plan']['charge_number'] = charge
+    return data
+
+
+def test_cancellation_contract_dates_and_privacy():
+    from app.domain.kirvano_commercial import CancellationCandidate
+    data = cancellation_payload()
+    data.pop('payment')
+    data['plan'].pop('next_charge_date')
+    before = copy.deepcopy(data)
+    result = classify(data)
+    assert isinstance(result.candidate, CancellationCandidate)
+    assert not hasattr(result.candidate, 'purchase_id')
+    assert not hasattr(result.candidate, 'valid_until')
+    assert data == before
+    assert 'buyer@example.com' not in repr(result)
+    assert result == classify(data)
+    data['payment'] = {'finished_at': 'bad'}
+    assert Reason.INBOX_VALIDATION_FAILED in classify(data).reason_codes
+
+
+def test_cancellation_rejects_invalid_fields():
+    cases = [('status', 'APPROVED', Reason.STATUS_NOT_CANCELED),
+             ('type', 'ONE_TIME', Reason.TYPE_NOT_RECURRING),
+             ('sale_id', None, Reason.INVALID_SALE_ID),
+             ('customer.email', 'bad', Reason.INVALID_EMAIL),
+             ('plan.charge_frequency', 'YEARLY', Reason.FREQUENCY_NOT_AUTHORIZED),
+             ('products', [], Reason.PRODUCT_NOT_AUTHORIZED)]
+    cases += [('plan.charge_number', value, Reason.INVALID_CHARGE_NUMBER)
+              for value in (None, True, '1', 0, -1, 1.0)]
+    for path, value, reason in cases:
+        data = cancellation_payload()
+        target = data
+        parts = path.split('.')
+        for key in parts[:-1]:
+            target = target[key]
+        if value is None:
+            target.pop(parts[-1])
+        else:
+            target[parts[-1]] = value
+        result = classify(data)
+        assert result.candidate is None
+        assert reason in result.reason_codes
+    for key in ('customer', 'plan', 'products'):
+        for value in (None, 'invalid', 1):
+            data = cancellation_payload()
+            data[key] = value
+            assert classify(data).candidate is None
+    for field in ('id', 'offer_id', 'is_order_bump'):
+        data = cancellation_payload()
+        data['products'][0][field] = True if field == 'is_order_bump' else 'other'
+        assert classify(data).candidate is None
+    data = cancellation_payload()
+    data['products'].append(copy.deepcopy(data['products'][0]))
+    assert Reason.MULTIPLE_AUTHORIZED_PRODUCTS in classify(data).reason_codes

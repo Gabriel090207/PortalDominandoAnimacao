@@ -246,3 +246,125 @@ def test_concurrent_conflicting_renewals(http, emulator_client, renewal_seed):
     assert event['processing_status']=='conflict' and event['business_status']=='review_required'
     assert event['variant_count']==2 and 'application' in event
     assert_renewal_shared(emulator_client,2,renewal_seed)
+
+from test_kirvano_commercial import cancellation_payload
+
+
+def all_commercial(client):
+    return {name:{s.id:s.to_dict() for s in client.collection(name).stream(timeout=5)}
+            for name in ('users','email_identities','subscriptions','purchases','entitlements')}
+
+
+def assert_cancel_preserves(client,before):
+    after=all_commercial(client)
+    for name in ('users','email_identities','purchases','entitlements'):
+        assert after[name]==before[name]
+    assert len(after['subscriptions'])==len(before['subscriptions'])
+    for identifier,sub in after['subscriptions'].items():
+        assert sub['status']=='canceled'
+        assert {k:v for k,v in sub.items() if k not in ('status','cancellation')}=={
+            k:v for k,v in before['subscriptions'][identifier].items() if k not in ('status','cancellation')}
+
+
+def test_cancellation_normal_retry_and_legacy(http,emulator_client,renewal_seed):
+    before=all_commercial(emulator_client);data=cancellation_payload()
+    assert http.post('/webhooks/kirvano',json=data).status_code==200
+    assert_cancel_preserves(emulator_client,before)
+    applied=inbox_document(emulator_client,data).get().to_dict()['application']
+    state=all_commercial(emulator_client)
+    assert applied['result']=='state_changed'
+    for request in (data,payload()):
+        assert http.post('/webhooks/kirvano',json=request).status_code==200
+    assert all_commercial(emulator_client)==state
+    assert inbox_document(emulator_client,data).get().to_dict()['application']==applied
+
+
+@pytest.mark.parametrize('distinct',[False,True])
+def test_concurrent_cancellations(http,emulator_client,renewal_seed,distinct):
+    before=all_commercial(emulator_client)
+    first=cancellation_payload();second=cancellation_payload(2) if distinct else copy.deepcopy(first)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        responses=list(pool.map(lambda data:http.post('/webhooks/kirvano',json=data),(first,second)))
+    assert tuple(r.status_code for r in responses)==(200,200)
+    assert_cancel_preserves(emulator_client,before)
+    events=[inbox_document(emulator_client,d).get().to_dict() for d in (first,second)]
+    assert all(e['business_status']=='applied' for e in events)
+    if distinct:
+        assert {e['application']['result'] for e in events}=={'state_changed','already_canceled'}
+    else:
+        assert events[0]['receipt_count']==2 and events[0]['variant_count']==1
+
+
+def test_cancellation_concurrent_renewal(http,emulator_client,renewal_seed):
+    first=cancellation_payload();second=renewal_payload()
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        responses=list(pool.map(lambda data:http.post('/webhooks/kirvano',json=data),(first,second)))
+    assert tuple(r.status_code for r in responses)==(200,200)
+    cancel=inbox_document(emulator_client,first).get().to_dict()
+    renewal=inbox_document(emulator_client,second).get().to_dict()
+    assert cancel['business_status']=='applied'
+    assert next(iter(all_commercial(emulator_client)['subscriptions'].values()))['status']=='canceled'
+    if renewal['business_status']=='applied':
+        assert count(emulator_client,'purchases')==2
+        assert count(emulator_client,'entitlements')==2
+    else:
+        assert renewal['business_reason_codes']==['subscription_not_active']
+        assert count(emulator_client,'purchases')==1
+        assert count(emulator_client,'entitlements')==1
+    for identifier,value in renewal_seed.items():
+        assert entitlement_history(emulator_client)[identifier]==value
+    state=all_commercial(emulator_client)
+    assert http.post('/webhooks/kirvano',json=second).status_code==200
+    assert all_commercial(emulator_client)==state
+
+
+def test_cancellation_before_sale_new_post(http,emulator_client):
+    data=cancellation_payload()
+    assert http.post('/webhooks/kirvano',json=data).status_code==200
+    assert inbox_document(emulator_client,data).get().to_dict()['business_reason_codes']==['cancellation_identity_missing']
+    assert all(not values for values in all_commercial(emulator_client).values())
+    assert http.post('/webhooks/kirvano',json=payload()).status_code==200
+    before=all_commercial(emulator_client)
+    assert http.post('/webhooks/kirvano',json=data).status_code==200
+    assert inbox_document(emulator_client,data).get().to_dict()['business_status']=='applied'
+    assert_cancel_preserves(emulator_client,before)
+
+
+@pytest.mark.parametrize('mode',['email','canceled','pending','expired','refunded','chargeback'])
+def test_cancellation_review(http,emulator_client,renewal_seed,mode):
+    data=cancellation_payload()
+    if mode=='email':data['customer']['email']='other@example.com'
+    else:
+        sub=next(emulator_client.collection('subscriptions').stream())
+        sub.reference.update({'status':mode})
+    before=all_commercial(emulator_client)
+    assert http.post('/webhooks/kirvano',json=data).status_code==200
+    event=inbox_document(emulator_client,data).get().to_dict()
+    assert event['business_status']=='review_required'
+    expected='cancellation_identity_missing' if mode=='email' else (
+        'cancellation_provenance_missing' if mode=='canceled' else 'subscription_not_active')
+    assert event['business_reason_codes']==[expected]
+    assert all_commercial(emulator_client)==before
+
+
+def test_cancellation_abort(http,emulator_client,renewal_seed):
+    data=cancellation_payload();before=all_commercial(emulator_client)
+    @firestore.transactional
+    def abort(transaction):
+        commercial_transaction(transaction,emulator_client,*prepared(data),uuid4().hex)
+        raise RuntimeError('Synthetic cancellation abort')
+    with pytest.raises(RuntimeError):abort(emulator_client.transaction())
+    assert not inbox_document(emulator_client,data).get().exists
+    assert all_commercial(emulator_client)==before
+
+
+def test_cancellation_conflicting_variants(http,emulator_client,renewal_seed):
+    first=cancellation_payload();second=copy.deepcopy(first);second['total_price']='20'
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        responses=list(pool.map(lambda data:http.post('/webhooks/kirvano',json=data),(first,second)))
+    assert tuple(r.status_code for r in responses)==(200,200)
+    event=inbox_document(emulator_client,first).get().to_dict()
+    assert event['processing_status']=='conflict' and event['business_status']=='review_required'
+    assert event['variant_count']==2 and event['application']['result']=='state_changed'
+    assert next(iter(all_commercial(emulator_client)['subscriptions'].values()))['status']=='canceled'
+    assert entitlement_history(emulator_client)==renewal_seed

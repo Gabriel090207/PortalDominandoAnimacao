@@ -83,7 +83,7 @@ def test_abort_and_retry():
     receive(c,payload());receive(c,payload());assert root(c)['receipt_count']==2
     assert len(docs(c,'purchases'))==1
 
-@pytest.mark.parametrize('event',['SUBSCRIPTION_CANCELED','SALE_REFUNDED','SALE_CHARGEBACK','UNKNOWN'])
+@pytest.mark.parametrize('event',['SALE_REFUNDED','SALE_CHARGEBACK','UNKNOWN'])
 def test_unsupported(event):
     c=Client();d=payload();d['event']=event;receive(c,d)
     assert all(k.startswith('kirvano_events/') for k in c.data)
@@ -267,3 +267,127 @@ def test_renewal_partial_pair_aborts(collection):
 def test_renewal_aborted_attempt_no_writes():
     c=Client();receive(c,payload());before=copy.deepcopy(c.data);receive(c,renewal_payload(),False)
     assert c.data==before
+
+from test_kirvano_commercial import cancellation_payload
+
+
+def commercial_effects(c):
+    return copy.deepcopy({k:v for k,v in c.data.items() if not k.startswith('kirvano_events/')})
+
+
+def test_cancellation_only_subscription_and_inbox_no_charge_reads():
+    c=Client();receive(c,payload());before=commercial_effects(c)
+    original=c.collection
+    def guarded(name):
+        assert name not in ('purchases','entitlements')
+        return original(name)
+    with patch.object(c,'collection',side_effect=guarded):
+        receive(c,cancellation_payload())
+        application=copy.deepcopy(event_root(c,cancellation_payload())['application'])
+        provenance=copy.deepcopy(next(iter(docs(c,'subscriptions').values()))['cancellation'])
+        receive(c,cancellation_payload())
+        receive(c,cancellation_payload(2))
+    for key,value in before.items():
+        if not key.startswith('subscriptions/'):assert c.data[key]==value
+    sub=next(iter(docs(c,'subscriptions').values()))
+    assert sub['status']=='canceled' and sub['cancellation']==provenance
+    old=next(v for k,v in before.items() if k.startswith('subscriptions/'))
+    assert {k:v for k,v in sub.items() if k not in ('status','cancellation')}=={k:v for k,v in old.items() if k!='status'}
+    assert event_root(c,cancellation_payload())['application']==application
+    assert event_root(c,cancellation_payload())['receipt_count']==2
+    assert application['result']=='state_changed'
+    assert event_root(c,cancellation_payload(2))['application']['result']=='already_canceled'
+    assert 'purchase_id' not in application and 'entitlement_id' not in application
+
+
+@pytest.mark.parametrize('status,reason', [('canceled','cancellation_provenance_missing'),
+    *[(s,'subscription_not_active') for s in ('pending','expired','refunded','chargeback')]])
+def test_cancellation_nonactive(status,reason):
+    c=Client();receive(c,payload());next(iter(docs(c,'subscriptions').values()))['status']=status
+    before=commercial_effects(c);data=cancellation_payload();receive(c,data)
+    assert event_root(c,data)['business_reason_codes']==[reason]
+    assert commercial_effects(c)==before
+
+
+def test_cancellation_before_sale_and_new_post():
+    c=Client();data=cancellation_payload();receive(c,data)
+    assert event_root(c,data)['business_reason_codes']==['cancellation_identity_missing']
+    assert commercial_effects(c)=={}
+    receive(c,payload());receive(c,data)
+    assert event_root(c,data)['business_status']=='applied'
+    assert event_root(c,data)['receipt_count']==2
+
+
+@pytest.mark.parametrize('mode', ['missing_sub','orphan','email','user_email','user_binding','scope','sale','product','offer','interval'])
+def test_cancellation_prerequisites(mode):
+    c=Client();receive(c,payload());data=cancellation_payload()
+    sub=next(iter(docs(c,'subscriptions').values()))
+    if mode=='missing_sub':data['sale_id']='synthetic-missing'
+    elif mode=='orphan':del c.data[next(iter(docs(c,'users')))]
+    elif mode=='email':data['customer']['email']='other@example.com'
+    elif mode=='user_email':next(iter(docs(c,'users').values()))['email_normalized']='other@example.com'
+    else:
+        key={'user_binding':'user_id','scope':'source_scope','sale':'sale_id','product':'product_id','offer':'offer_id','interval':'interval'}[mode]
+        sub[key]='yearly' if key=='interval' else 'synthetic-other'
+    before=copy.deepcopy(c.data)
+    if mode=='orphan':
+        with pytest.raises(RuntimeError):receive(c,data)
+        assert c.data==before
+    else:
+        receive(c,data)
+        assert event_root(c,data)['business_status']=='review_required'
+        assert commercial_effects(c)=={k:v for k,v in before.items() if not k.startswith('kirvano_events/')}
+        if mode=='missing_sub':assert event_root(c,data)['business_reason_codes']==['cancellation_subscription_missing']
+
+
+@pytest.mark.parametrize('invalid',[None,{}, {'processed_at':None,'origin_event_id':'bad','origin_fingerprint':'bad'}])
+def test_cancellation_bad_provenance_aborts(invalid):
+    c=Client();receive(c,payload());next(iter(docs(c,'subscriptions').values()))['cancellation']=invalid
+    before=copy.deepcopy(c.data)
+    with pytest.raises(RuntimeError):receive(c,cancellation_payload())
+    assert c.data==before
+
+
+def test_cancellation_conflict_abort_and_legacy_retries():
+    c=Client();receive(c,payload());receive(c,renewal_payload())
+    data=cancellation_payload();before=copy.deepcopy(c.data);receive(c,data,False);assert c.data==before
+    receive(c,data);effects=commercial_effects(c);app=copy.deepcopy(event_root(c,data)['application'])
+    receive(c,payload());receive(c,renewal_payload())
+    assert commercial_effects(c)==effects
+    receive(c,renewal_payload(3))
+    assert event_root(c,renewal_payload(3))['business_reason_codes']==['subscription_not_active']
+    changed=copy.deepcopy(data);changed['total_price']='20';receive(c,changed)
+    assert event_root(c,data)['processing_status']=='conflict'
+    assert event_root(c,data)['application']==app and commercial_effects(c)==effects
+
+
+@pytest.mark.parametrize('field,value', [('result','unknown'),('policy_version',2),('purchase_id','synthetic-extra'),
+    ('operation','unknown'),('fingerprint','0'*64),('processed_at',None)])
+def test_cancellation_invalid_application_aborts(field,value):
+    c=Client();receive(c,payload());data=cancellation_payload();receive(c,data)
+    event_root(c,data)['application'][field]=value;before=copy.deepcopy(c.data)
+    with pytest.raises(RuntimeError):receive(c,data)
+    assert c.data==before
+
+
+def test_cancellation_access_boundaries_and_user_states():
+    from datetime import timedelta
+    from app.domain.models import Entitlement,UserAccessState
+    from app.services.access_service import can_access_portal
+    c=Client();receive(c,payload());receive(c,cancellation_payload())
+    stored=next(iter(docs(c,'entitlements').values()))
+    right=Entitlement(**{k:stored[k] for k in ('user_id','resource_key','status','valid_from','valid_until')})
+    enabled=UserAccessState(account_status='enabled',activation_status='active')
+    end=right.valid_until
+    assert can_access_portal(right.user_id,enabled,[right],now=end-timedelta(seconds=1))
+    for now in (end,end+timedelta(seconds=1)):
+        assert not can_access_portal(right.user_id,enabled,[right],now=now)
+    other=right.model_copy(update={'valid_from':end,'valid_until':end+timedelta(days=1)})
+    assert can_access_portal(right.user_id,enabled,[right,other],now=end)
+    for state in (UserAccessState(account_status='blocked',activation_status='active'),
+                  UserAccessState(account_status='enabled',activation_status='suspended')):
+        assert not can_access_portal(right.user_id,state,[right],now=end-timedelta(seconds=1))
+    for field,value in (('account_status','blocked'),('activation_status','suspended')):
+        c=Client();receive(c,payload());next(iter(docs(c,'users').values()))[field]=value
+        before=copy.deepcopy(docs(c,'users'));receive(c,cancellation_payload())
+        assert docs(c,'users')==before

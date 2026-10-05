@@ -1,10 +1,12 @@
 """Initial sale and renewal. All snapshots precede writes; no external effects."""
 from datetime import datetime
+import re
 import random
 import time
 from google.api_core.exceptions import Aborted
 from google.cloud import firestore
 
+from app.domain.kirvano_commercial import CancellationCandidate
 from app.domain.models import UserAccessState, Entitlement
 from app.domain.states import AccountStatus, ActivationStatus, CommercialStatus, EntitlementStatus, ResourceKey, SubscriptionInterval, KirvanoEventState
 from app.persistence.collections import CollectionName as C
@@ -70,6 +72,16 @@ def _structure(data, required, *, versioned=True):
         raise RuntimeError('Invalid commercial timestamp.')
 
 
+def _validate_cancellation(value):
+    if (not isinstance(value, dict)
+        or set(value) != {'processed_at', 'origin_event_id', 'origin_fingerprint'}
+        or not isinstance(value['processed_at'], datetime)
+        or value['processed_at'].utcoffset() is None
+        or any(not isinstance(value[key], str) or not re.fullmatch(r'[0-9a-f]{64}', value[key])
+               for key in ('origin_event_id', 'origin_fingerprint'))):
+        raise RuntimeError('Invalid cancellation provenance.')
+
+
 def _validate_stored(collection, data):
     required = {
         C.USERS: {'schema_version','email_normalized','email_normalization_version','account_status','activation_status','created_at'},
@@ -90,6 +102,8 @@ def _validate_stored(collection, data):
     elif collection == C.SUBSCRIPTIONS:
         CommercialStatus(data['status'])
         SubscriptionInterval(data['interval'])
+        if 'cancellation' in data:
+            _validate_cancellation(data['cancellation'])
     else:
         if collection == C.PURCHASES:
             CommercialStatus(data['status'])
@@ -119,18 +133,38 @@ def commercial_transaction(transaction, client, event, commercial, identity, can
     elif application is not None:
         raise RuntimeError('Invalid commercial application.')
     if application is not None:
-        keys = {'policy_version', 'fingerprint', 'processed_at', 'user_id', 'purchase_id', 'subscription_id', 'entitlement_id'}
-        if not isinstance(application, dict) or set(application) != keys or type(application['policy_version']) is not int or application['policy_version'] != 1 or not isinstance(application['processed_at'], datetime):
+        grant_keys = {'policy_version', 'fingerprint', 'processed_at', 'user_id', 'purchase_id', 'subscription_id', 'entitlement_id'}
+        cancel_keys = {'operation', 'policy_version', 'fingerprint', 'processed_at', 'user_id', 'subscription_id', 'result'}
+        cancellation_application = isinstance(application, dict) and application.get('operation') == 'subscription_cancellation'
+        keys = cancel_keys if cancellation_application else grant_keys
+        if (not isinstance(application, dict) or set(application) != keys
+            or type(application['policy_version']) is not int or application['policy_version'] != 1
+            or not isinstance(application['processed_at'], datetime)
+            or (cancellation_application and (application['processed_at'].utcoffset() is None
+                or application['result'] not in ('state_changed', 'already_canceled')))):
             raise RuntimeError('Invalid commercial application.')
         for key in keys - {'policy_version', 'processed_at'}:
             if not isinstance(application[key], str) or not application[key] or '/' in application[key]:
                 raise RuntimeError('Invalid application reference.')
-        # Even conflicting/noneligible retries must not hide missing applied effects.
-        for collection, key in ((C.USERS,'user_id'), (C.PURCHASES,'purchase_id'), (C.SUBSCRIPTIONS,'subscription_id'), (C.ENTITLEMENTS,'entitlement_id')):
+        references = ((C.USERS,'user_id'), (C.SUBSCRIPTIONS,'subscription_id'))
+        if not cancellation_application:
+            references += ((C.PURCHASES,'purchase_id'), (C.ENTITLEMENTS,'entitlement_id'))
+        for collection, key in references:
             stored = _read(_document(client, collection, application[key]), transaction)
             if stored is None:
                 raise RuntimeError('Missing applied commercial document.')
             _validate_stored(collection, stored)
+            if cancellation_application and collection == C.SUBSCRIPTIONS:
+                provenance = stored.get('cancellation')
+                _validate_cancellation(provenance)
+                same_origin = (provenance['origin_event_id'] == event.logical_id
+                               and provenance['origin_fingerprint'] == application['fingerprint'])
+                if (stored['user_id'] != application['user_id']
+                    or (application['result'] == 'state_changed' and (
+                        not same_origin or provenance['processed_at'] != application['processed_at']))
+                    or (application['result'] == 'already_canceled'
+                        and provenance['origin_event_id'] == event.logical_id)):
+                    raise RuntimeError('Inconsistent cancellation application.')
 
     def finish(reason=None):
         update = {'business_schema_version': 1, 'business_status': 'review_required' if reason else 'applied',
@@ -149,6 +183,59 @@ def commercial_transaction(transaction, client, event, commercial, identity, can
         return receipt
     if identity is None or (identity.normalization_version, identity.identity_version, identity.hmac_key_version) != (1,1,1):
         raise RuntimeError('Invalid commercial identity contract.')
+    if isinstance(candidate, CancellationCandidate):
+        identity_ref = _document(client, C.EMAIL_IDENTITIES, identity.identity_id)
+        subscription_ref = _document(client, C.SUBSCRIPTIONS, candidate.subscription_id)
+        email_identity = _read(identity_ref, transaction)
+        subscription = _read(subscription_ref, transaction)
+        _validate_stored(C.SUBSCRIPTIONS, subscription)
+        if email_identity is None:
+            return finish('cancellation_identity_missing')
+        _structure(email_identity, {'schema_version','normalization_version','identity_version','hmac_key_version','user_id','created_at'})
+        if any(type(email_identity[k]) is not int or email_identity[k] != 1
+               for k in ('normalization_version', 'hmac_key_version')):
+            raise RuntimeError('Invalid email identity version.')
+        user_id = email_identity['user_id']
+        user = _read(_document(client, C.USERS, user_id), transaction)
+        if user is None:
+            raise RuntimeError('Orphan email identity.')
+        _validate_stored(C.USERS, user)
+        if user['email_normalized'] != candidate.email_normalized:
+            return finish('email_binding_mismatch')
+        if subscription is None:
+            return finish('cancellation_subscription_missing')
+        expected_binding = {'source_scope': candidate.source_scope, 'sale_id': candidate.sale_id,
+                            'user_id': user_id, 'product_id': candidate.product_id,
+                            'offer_id': candidate.offer_id, 'interval': SubscriptionInterval.MONTHLY.value}
+        if any(subscription[k] != v for k, v in expected_binding.items()):
+            return finish('commercial_binding_mismatch')
+        expected_application = {'operation': 'subscription_cancellation', 'policy_version': 1,
+                                'fingerprint': event.fingerprint, 'user_id': user_id,
+                                'subscription_id': candidate.subscription_id}
+        if application is not None:
+            if any(application.get(k) != v for k, v in expected_application.items()):
+                return finish('application_binding_mismatch')
+            return finish()
+        if subscription['status'] == CommercialStatus.ACTIVE:
+            if 'cancellation' in subscription:
+                raise RuntimeError('Active subscription has cancellation provenance.')
+            result = 'state_changed'
+            plan.update(subscription_ref, {
+                'status': CommercialStatus.CANCELED.value,
+                'cancellation': {'processed_at': firestore.SERVER_TIMESTAMP,
+                                 'origin_event_id': event.logical_id,
+                                 'origin_fingerprint': event.fingerprint}})
+        elif subscription['status'] == CommercialStatus.CANCELED:
+            if 'cancellation' not in subscription:
+                return finish('cancellation_provenance_missing')
+            if subscription['cancellation']['origin_event_id'] == event.logical_id:
+                raise RuntimeError('Missing originating cancellation application.')
+            result = 'already_canceled'
+        else:
+            return finish('subscription_not_active')
+        plan.update(root, {'application': {**expected_application, 'processed_at': firestore.SERVER_TIMESTAMP,
+                                          'result': result}})
+        return finish()
     entitlement_id = digest(['kirvano-entitlement', 1, candidate.purchase_id, ResourceKey.PORTAL.value])
     identity_ref = _document(client, C.EMAIL_IDENTITIES, identity.identity_id)
     subscription_ref = _document(client, C.SUBSCRIPTIONS, candidate.subscription_id)

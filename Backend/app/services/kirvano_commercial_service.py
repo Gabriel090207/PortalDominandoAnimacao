@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from app.domain.email import normalize_email
 from app.domain.kirvano_commercial import (
-    COMMERCIAL_IDENTITY_VERSION, CommercialCandidate, CommercialClassification,
+    COMMERCIAL_IDENTITY_VERSION, CancellationCandidate, CommercialCandidate, CommercialClassification,
     CommercialReason as Reason, CommercialResult,
 )
 from app.services.kirvano_event_service import SOURCE_SCOPE, digest, normalize_event
@@ -45,10 +45,11 @@ def classify_commercial_event(payload, *, timezone_name: str | None) -> Commerci
     if normalized.validation_issues:
         reasons.add(Reason.INBOX_VALIDATION_FAILED)
     data = normalized.normalized_payload
-    if payload.get('event') not in ('SALE_APPROVED', 'SUBSCRIPTION_RENEWED'):
+    cancellation = payload.get('event') == 'SUBSCRIPTION_CANCELED'
+    if payload.get('event') not in ('SALE_APPROVED', 'SUBSCRIPTION_RENEWED', 'SUBSCRIPTION_CANCELED'):
         reasons.add(Reason.EVENT_NOT_AUTHORIZED)
     for key, expected, reason in (
-        ('status', 'APPROVED', Reason.STATUS_NOT_APPROVED),
+        ('status', 'CANCELED' if cancellation else 'APPROVED', Reason.STATUS_NOT_CANCELED if cancellation else Reason.STATUS_NOT_APPROVED),
         ('type', 'RECURRING', Reason.TYPE_NOT_RECURRING),
     ):
         if payload.get(key) != expected:
@@ -72,7 +73,7 @@ def classify_commercial_event(payload, *, timezone_name: str | None) -> Commerci
             pass
     if email is None:
         reasons.add(Reason.INVALID_EMAIL)
-    for key in ('plan', 'payment', 'products'):
+    for key in (('plan', 'products') if cancellation else ('plan', 'payment', 'products')):
         expected = list if key == 'products' else dict
         if not isinstance(payload.get(key), expected):
             reasons.add(Reason.INVALID_STRUCTURE)
@@ -92,17 +93,23 @@ def classify_commercial_event(payload, *, timezone_name: str | None) -> Commerci
             pass
     if zone is None:
         reasons.add(Reason.INVALID_TIMEZONE)
-    start = _parse_timestamp(data.get('payment_finished_at'), zone)
-    end = _parse_timestamp(data.get('next_charge_date'), zone)
-    if start is None:
-        reasons.add(Reason.INVALID_PERIOD_START)
-    if end is None:
-        reasons.add(Reason.INVALID_PERIOD_END)
-    if start is not None and end is not None and end <= start:
-        reasons.add(Reason.INVALID_PERIOD_ORDER)
+    if not cancellation:
+        start = _parse_timestamp(data.get('payment_finished_at'), zone)
+        end = _parse_timestamp(data.get('next_charge_date'), zone)
+        if start is None:
+            reasons.add(Reason.INVALID_PERIOD_START)
+        if end is None:
+            reasons.add(Reason.INVALID_PERIOD_END)
+        if start is not None and end is not None and end <= start:
+            reasons.add(Reason.INVALID_PERIOD_ORDER)
     if reasons:
         return CommercialResult(CommercialClassification.REVIEW_REQUIRED, tuple(sorted(reasons)))
     subscription_id = digest(['kirvano-subscription', COMMERCIAL_IDENTITY_VERSION, SOURCE_SCOPE, sale_id])
+    if cancellation:
+        return CommercialResult(CommercialClassification.ELIGIBLE, (), CancellationCandidate(
+            email, sale_id, charge, 'MONTHLY', AUTHORIZED_PRODUCT_ID, AUTHORIZED_OFFER_ID,
+            SOURCE_SCOPE, subscription_id,
+        ))
     purchase_id = digest(['kirvano-charge', COMMERCIAL_IDENTITY_VERSION, SOURCE_SCOPE, sale_id, charge])
     return CommercialResult(CommercialClassification.ELIGIBLE, (), CommercialCandidate(
         email, sale_id, charge, 'MONTHLY', AUTHORIZED_PRODUCT_ID, AUTHORIZED_OFFER_ID,

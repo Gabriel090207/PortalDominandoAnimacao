@@ -16,6 +16,7 @@ class CommercialReason(StrEnum):
     INVALID_STRUCTURE = "invalid_structure"
     INBOX_VALIDATION_FAILED = "inbox_validation_failed"
     EVENT_NOT_AUTHORIZED = "event_not_authorized"
+    STATUS_NOT_CANCELED = "status_not_canceled"
     STATUS_NOT_APPROVED = "status_not_approved"
     TYPE_NOT_RECURRING = "type_not_recurring"
     INVALID_EMAIL = "invalid_email"
@@ -48,7 +49,21 @@ class CommercialCandidate:
 
 
 @dataclass(frozen=True)
+class CancellationCandidate:
+    email_normalized: str = field(repr=False)
+    sale_id: str
+    charge_number: int
+    charge_frequency: str
+    product_id: str
+    offer_id: str
+    source_scope: str
+    subscription_id: str
+    schema_version: int = COMMERCIAL_SCHEMA_VERSION
+    identity_version: int = COMMERCIAL_IDENTITY_VERSION
+
+
+@dataclass(frozen=True)
 class CommercialResult:
     classification: CommercialClassification
     reason_codes: tuple[CommercialReason, ...]
-    candidate: CommercialCandidate | None = None
+    candidate: CommercialCandidate | CancellationCandidate | None = None
