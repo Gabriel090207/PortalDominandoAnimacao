@@ -45,8 +45,9 @@ def classify_commercial_event(payload, *, timezone_name: str | None) -> Commerci
     if normalized.validation_issues:
         reasons.add(Reason.INBOX_VALIDATION_FAILED)
     data = normalized.normalized_payload
+    if payload.get('event') not in ('SALE_APPROVED', 'SUBSCRIPTION_RENEWED'):
+        reasons.add(Reason.EVENT_NOT_AUTHORIZED)
     for key, expected, reason in (
-        ('event', 'SALE_APPROVED', Reason.EVENT_NOT_AUTHORIZED),
         ('status', 'APPROVED', Reason.STATUS_NOT_APPROVED),
         ('type', 'RECURRING', Reason.TYPE_NOT_RECURRING),
     ):

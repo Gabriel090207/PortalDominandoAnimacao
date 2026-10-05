@@ -1,4 +1,4 @@
-"""SALE_APPROVED only. All snapshots precede writes; no external side effects."""
+"""Initial sale and renewal. All snapshots precede writes; no external effects."""
 from datetime import datetime
 import random
 import time
@@ -160,6 +160,14 @@ def commercial_transaction(transaction, client, event, commercial, identity, can
     entitlement = _read(entitlement_ref, transaction)
     for collection, stored in ((C.SUBSCRIPTIONS,subscription),(C.PURCHASES,purchase),(C.ENTITLEMENTS,entitlement)):
         _validate_stored(collection, stored)
+    renewal = event.normalized_payload.get('event') == 'SUBSCRIPTION_RENEWED'
+    if renewal:
+        if (purchase is None) != (entitlement is None):
+            raise RuntimeError('Incomplete purchase entitlement pair.')
+        if purchase is not None and subscription is None:
+            raise RuntimeError('Missing purchase subscription.')
+        if email_identity is None:
+            return finish('renewal_identity_missing')
     if email_identity is not None:
         _structure(email_identity, {'schema_version','normalization_version','identity_version','hmac_key_version','user_id','created_at'})
         if any(type(email_identity[k]) is not int or email_identity[k] != 1 for k in ('normalization_version','hmac_key_version')):
@@ -181,6 +189,8 @@ def commercial_transaction(transaction, client, event, commercial, identity, can
         raise RuntimeError('Incomplete purchase entitlement pair.')
     if purchase is not None and subscription is None:
         raise RuntimeError('Missing purchase subscription.')
+    if renewal and subscription is None:
+        return finish('renewal_subscription_missing')
     timestamp = firestore.SERVER_TIMESTAMP
     sub_data = {'schema_version':1,'identity_version':1,'source_scope':candidate.source_scope,'sale_id':candidate.sale_id,'user_id':user_id,
                 'product_id':candidate.product_id,'offer_id':candidate.offer_id,'interval':SubscriptionInterval.MONTHLY.value,

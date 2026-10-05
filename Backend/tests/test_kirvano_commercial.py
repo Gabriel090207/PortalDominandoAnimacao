@@ -38,7 +38,7 @@ class CommercialTests(unittest.TestCase):
                *[('plan.charge_number',v,Reason.INVALID_CHARGE_NUMBER) for v in [None,'1',True,0,-1,1.0]],
                ('plan.charge_frequency','YEARLY',Reason.FREQUENCY_NOT_AUTHORIZED),
                ('type','ONE_TIME',Reason.TYPE_NOT_RECURRING),('status','PENDING',Reason.STATUS_NOT_APPROVED),
-               *[('event',v,Reason.EVENT_NOT_AUTHORIZED) for v in ['UNKNOWN','SUBSCRIPTION_RENEWED','SUBSCRIPTION_CANCELED','SALE_REFUNDED','SALE_CHARGEBACK']],
+               *[('event',v,Reason.EVENT_NOT_AUTHORIZED) for v in ['UNKNOWN','SUBSCRIPTION_CANCELED','SALE_REFUNDED','SALE_CHARGEBACK']],
                *[(field,v,reason) for field,reason in [('payment.finished_at',Reason.INVALID_PERIOD_START),('plan.next_charge_date',Reason.INVALID_PERIOD_END)] for v in [None,'bad','2026-10-05T12:00:00','2026-10-05 12:00:00+00:00','2026-2-05 12:00:00','2026-02-30 12:00:00']]]
         for path,value,reason in cases:
             with self.subTest(path=path,value=value):
@@ -113,3 +113,27 @@ class CommercialTests(unittest.TestCase):
             self.assertNotEqual(base.subscription_id,other.subscription_id)
             self.assertNotEqual(base.purchase_id,other.purchase_id)
         self.assertNotEqual(base.subscription_id,base.purchase_id)
+
+    def test_renewal_contract_eligible(self):
+        data=payload();data['event']='SUBSCRIPTION_RENEWED';data['plan']['charge_number']=2
+        result=classify(data)
+        self.assertEqual(result.classification,State.ELIGIBLE)
+        self.assertEqual(result.candidate.valid_from,datetime(2026,10,5,15,tzinfo=timezone.utc))
+
+    def test_renewal_contract_fail_closed(self):
+        mutations=[('status','PENDING'),('type','ONE_TIME'),('sale_id',None),
+                   ('customer.email','bad'),('plan.charge_frequency','YEARLY'),
+                   ('plan.charge_number',True),('plan.charge_number','2'),('plan.charge_number',0),
+                   ('payment.finished_at','bad'),('plan.next_charge_date','2026-10-05 12:00:00')]
+        for path,value in mutations:
+            with self.subTest(path=path,value=value):
+                data=payload();data['event']='SUBSCRIPTION_RENEWED';target=data;keys=path.split('.')
+                for key in keys[:-1]:target=target[key]
+                target[keys[-1]]=value
+                self.assertEqual(classify(data).classification,State.REVIEW_REQUIRED)
+        for zone in (None,'Invalid/Zone'):
+            data=payload();data['event']='SUBSCRIPTION_RENEWED'
+            self.assertEqual(classify(data,zone).classification,State.REVIEW_REQUIRED)
+        for field,value in [('id','other'),('offer_id','other'),('is_order_bump',True)]:
+            data=payload();data['event']='SUBSCRIPTION_RENEWED';data['products'][0][field]=value
+            self.assertEqual(classify(data).classification,State.REVIEW_REQUIRED)

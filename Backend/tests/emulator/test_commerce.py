@@ -97,3 +97,152 @@ def test_retry_after_commit(http, emulator_client):
     assert before == after['application'] and after['receipt_count'] == 2
     for name in ('users','email_identities','subscriptions','purchases','entitlements'):
         assert count(emulator_client, name) == 1
+
+
+from test_kirvano_commerce_transaction import renewal_payload
+from app.services.kirvano_event_service import normalize_event
+
+
+def inbox_document(client, data):
+    return client.collection('kirvano_events').document(normalize_event(data).logical_id)
+
+
+def entitlement_history(client):
+    return {snapshot.id:snapshot.to_dict() for snapshot in client.collection('entitlements').stream(timeout=5)}
+
+
+def assert_renewal_shared(client, charges, previous):
+    for name in ('users','email_identities','subscriptions'):
+        assert count(client,name)==1
+    for name in ('purchases','entitlements'):
+        assert count(client,name)==charges
+    current=entitlement_history(client)
+    for identifier,value in previous.items():
+        assert current[identifier]==value
+
+
+@pytest.fixture
+def renewal_seed(http, emulator_client):
+    assert http.post('/webhooks/kirvano',json=payload()).status_code==200
+    return entitlement_history(emulator_client)
+
+
+def test_initial_sale_then_renewal(http, emulator_client, renewal_seed):
+    data=renewal_payload()
+    assert http.post('/webhooks/kirvano',json=data).status_code==200
+    assert inbox_document(emulator_client,data).get().to_dict()['business_status']=='applied'
+    assert_renewal_shared(emulator_client,2,renewal_seed)
+
+
+def test_renewal_retry(http, emulator_client, renewal_seed):
+    data=renewal_payload()
+    assert http.post('/webhooks/kirvano',json=data).status_code==200
+    application=inbox_document(emulator_client,data).get().to_dict()['application']
+    history=entitlement_history(emulator_client)
+    assert http.post('/webhooks/kirvano',json=data).status_code==200
+    event=inbox_document(emulator_client,data).get().to_dict()
+    assert event['application']==application and event['receipt_count']==2
+    assert_renewal_shared(emulator_client,2,history)
+
+
+def test_renewal_charge_three_before_two(http, emulator_client, renewal_seed):
+    for data in (renewal_payload(3,'2026-12-05 12:00:00','2027-01-05 12:00:00'),renewal_payload()):
+        assert http.post('/webhooks/kirvano',json=data).status_code==200
+        assert inbox_document(emulator_client,data).get().to_dict()['business_status']=='applied'
+    assert_renewal_shared(emulator_client,3,renewal_seed)
+
+
+@pytest.mark.parametrize('distinct',[False,True])
+def test_concurrent_renewals(http, emulator_client, renewal_seed, distinct):
+    first=renewal_payload()
+    second=renewal_payload(3,'2026-12-05 12:00:00','2027-01-05 12:00:00') if distinct else copy.deepcopy(first)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        responses=list(pool.map(lambda data:http.post('/webhooks/kirvano',json=data),(first,second)))
+    assert tuple(r.status_code for r in responses)==(200,200)
+    assert_renewal_shared(emulator_client,3 if distinct else 2,renewal_seed)
+    if not distinct:
+        event=inbox_document(emulator_client,first).get().to_dict()
+        assert event['receipt_count']==2 and event['variant_count']==1
+
+
+def test_renewal_before_initial_sale(http, emulator_client):
+    data=renewal_payload()
+    assert http.post('/webhooks/kirvano',json=data).status_code==200
+    event=inbox_document(emulator_client,data).get().to_dict()
+    assert event['business_reason_codes']==['renewal_identity_missing']
+    for name in ('users','email_identities','subscriptions','purchases','entitlements'):assert count(emulator_client,name)==0
+
+
+def test_renewal_new_post_after_initial_sale(http, emulator_client):
+    data=renewal_payload()
+    assert http.post('/webhooks/kirvano',json=data).status_code==200
+    assert http.post('/webhooks/kirvano',json=payload()).status_code==200
+    previous=entitlement_history(emulator_client)
+    assert http.post('/webhooks/kirvano',json=data).status_code==200
+    event=inbox_document(emulator_client,data).get().to_dict()
+    assert event['business_status']=='applied' and event['receipt_count']==2 and event['variant_count']==1
+    assert_renewal_shared(emulator_client,2,previous)
+
+
+def test_renewal_different_email(http, emulator_client, renewal_seed):
+    data=renewal_payload();data['customer']['email']='other@example.com'
+    assert http.post('/webhooks/kirvano',json=data).status_code==200
+    assert inbox_document(emulator_client,data).get().to_dict()['business_status']=='review_required'
+    assert_renewal_shared(emulator_client,1,renewal_seed)
+
+
+@pytest.mark.parametrize('status',['canceled','expired','pending','refunded','chargeback'])
+def test_renewal_nonactive_subscription(http, emulator_client, renewal_seed, status):
+    subscription=next(emulator_client.collection('subscriptions').stream())
+    subscription.reference.update({'status':status})
+    data=renewal_payload()
+    assert http.post('/webhooks/kirvano',json=data).status_code==200
+    assert inbox_document(emulator_client,data).get().to_dict()['business_reason_codes']==['subscription_not_active']
+    assert subscription.reference.get().to_dict()['status']==status
+    assert_renewal_shared(emulator_client,1,renewal_seed)
+
+
+@pytest.mark.parametrize('reverse',[False,True])
+def test_same_charge_different_types(http, emulator_client, renewal_seed, reverse):
+    renewal=renewal_payload();sale=copy.deepcopy(renewal);sale['event']='SALE_APPROVED'
+    first,second=(renewal,sale) if reverse else (sale,renewal)
+    assert http.post('/webhooks/kirvano',json=first).status_code==200
+    application=inbox_document(emulator_client,first).get().to_dict()['application']
+    purchase_ref=emulator_client.collection('purchases').document(application['purchase_id']);purchase=purchase_ref.get().to_dict()
+    assert http.post('/webhooks/kirvano',json=second).status_code==200
+    assert inbox_document(emulator_client,second).get().to_dict()['business_reason_codes']==['commercial_binding_mismatch']
+    assert inbox_document(emulator_client,first).get().to_dict()['application']==application
+    assert purchase_ref.get().to_dict()==purchase
+    assert_renewal_shared(emulator_client,2,renewal_seed)
+
+
+@pytest.mark.parametrize('start',['2026-11-10 12:00:00','2026-10-25 12:00:00'])
+def test_renewal_gap_overlap(http, emulator_client, renewal_seed, start):
+    data=renewal_payload(start=start)
+    assert http.post('/webhooks/kirvano',json=data).status_code==200
+    candidate=prepared(data)[1].candidate;event=inbox_document(emulator_client,data).get().to_dict()
+    entitlement=emulator_client.collection('entitlements').document(event['application']['entitlement_id']).get().to_dict()
+    assert (entitlement['valid_from'],entitlement['valid_until'])==(candidate.valid_from,candidate.valid_until)
+    assert_renewal_shared(emulator_client,2,renewal_seed)
+
+
+def test_renewal_abort_no_partial_writes(emulator_client, renewal_seed):
+    data=renewal_payload()
+    @firestore.transactional
+    def abort(transaction):
+        commercial_transaction(transaction,emulator_client,*prepared(data),uuid4().hex)
+        raise RuntimeError('Synthetic renewal abort')
+    with pytest.raises(RuntimeError):abort(emulator_client.transaction())
+    assert not inbox_document(emulator_client,data).get().exists
+    assert_renewal_shared(emulator_client,1,renewal_seed)
+
+
+def test_concurrent_conflicting_renewals(http, emulator_client, renewal_seed):
+    first=renewal_payload();second=copy.deepcopy(first);second['total_price']='20'
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        responses=list(pool.map(lambda data:http.post('/webhooks/kirvano',json=data),(first,second)))
+    assert tuple(r.status_code for r in responses)==(200,200)
+    event=inbox_document(emulator_client,first).get().to_dict()
+    assert event['processing_status']=='conflict' and event['business_status']=='review_required'
+    assert event['variant_count']==2 and 'application' in event
+    assert_renewal_shared(emulator_client,2,renewal_seed)

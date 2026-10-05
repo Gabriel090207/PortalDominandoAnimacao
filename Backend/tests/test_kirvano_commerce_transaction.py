@@ -83,7 +83,7 @@ def test_abort_and_retry():
     receive(c,payload());receive(c,payload());assert root(c)['receipt_count']==2
     assert len(docs(c,'purchases'))==1
 
-@pytest.mark.parametrize('event',['SUBSCRIPTION_RENEWED','SUBSCRIPTION_CANCELED','SALE_REFUNDED','SALE_CHARGEBACK','UNKNOWN'])
+@pytest.mark.parametrize('event',['SUBSCRIPTION_CANCELED','SALE_REFUNDED','SALE_CHARGEBACK','UNKNOWN'])
 def test_unsupported(event):
     c=Client();d=payload();d['event']=event;receive(c,d)
     assert all(k.startswith('kirvano_events/') for k in c.data)
@@ -139,3 +139,131 @@ def test_http_orchestration_and_redaction():
         del c.data[next(iter(docs(c,'users')))]
         response=client.post('/webhooks/kirvano',json=payload())
         assert response.status_code==503 and response.json()=={'detail':'Service unavailable'}
+
+
+def renewal_payload(charge=2, start='2026-11-05 12:00:00', end='2026-12-05 12:00:00'):
+    data=payload();data['event']='SUBSCRIPTION_RENEWED';data['plan']['charge_number']=charge
+    data['payment']['finished_at']=start;data['plan']['next_charge_date']=end
+    return data
+
+
+def event_root(c,data):return c.data['kirvano_events/'+normalize_event(data).logical_id]
+
+
+def assert_shared(c,charges):
+    for name in ('users','email_identities','subscriptions'):assert len(docs(c,name))==1
+    for name in ('purchases','entitlements'):assert len(docs(c,name))==charges
+
+
+def test_renewal_creates_only_charge_and_retry_preserves_history():
+    c=Client();receive(c,payload());history=copy.deepcopy(c.data);data=renewal_payload();receive(c,data)
+    assert_shared(c,2)
+    for key,value in history.items():assert c.data[key]==value
+    applied=copy.deepcopy(event_root(c,data)['application']);effects=copy.deepcopy({k:v for k,v in c.data.items() if not k.startswith('kirvano_events/')})
+    receive(c,data)
+    assert event_root(c,data)['application']==applied
+    assert event_root(c,data)['receipt_count']==2
+    assert {k:v for k,v in c.data.items() if not k.startswith('kirvano_events/')}==effects
+
+
+def test_renewal_identity_missing_and_new_post():
+    c=Client();data=renewal_payload();receive(c,data)
+    assert event_root(c,data)['business_reason_codes']==['renewal_identity_missing']
+    assert all(k.startswith('kirvano_events/') for k in c.data)
+    receive(c,payload());receive(c,data)
+    assert event_root(c,data)['business_status']=='applied'
+    assert event_root(c,data)['receipt_count']==2
+    assert event_root(c,data)['variant_count']==1
+    assert_shared(c,2)
+
+
+def test_renewal_subscription_missing():
+    c=Client();receive(c,payload());data=renewal_payload();data['sale_id']='unknown-subscription';receive(c,data)
+    assert event_root(c,data)['business_reason_codes']==['renewal_subscription_missing']
+    assert_shared(c,1)
+
+
+def test_renewal_orphan_aborts():
+    c=Client();receive(c,payload());del c.data[next(iter(docs(c,'users')))];before=copy.deepcopy(c.data)
+    with pytest.raises(RuntimeError):receive(c,renewal_payload())
+    assert c.data==before
+
+
+@pytest.mark.parametrize('mode',['new_email','existing_other_email','user_mismatch','subscription_mismatch'])
+def test_renewal_binding_review(mode):
+    c=Client();receive(c,payload());data=renewal_payload()
+    if mode=='new_email':data['customer']['email']='other@example.com'
+    elif mode=='existing_other_email':
+        other=payload();other['sale_id']='other-sale';other['customer']['email']='other@example.com';receive(c,other)
+        data['customer']['email']='other@example.com'
+    elif mode=='user_mismatch':next(iter(docs(c,'users').values()))['email_normalized']='other@example.com'
+    else:next(iter(docs(c,'subscriptions').values()))['user_id']='another-user'
+    before=copy.deepcopy({k:v for k,v in c.data.items() if not k.startswith('kirvano_events/')});receive(c,data)
+    assert event_root(c,data)['business_status']=='review_required'
+    assert {k:v for k,v in c.data.items() if not k.startswith('kirvano_events/')}==before
+
+
+@pytest.mark.parametrize('status',['canceled','expired','pending','refunded','chargeback'])
+def test_renewal_subscription_nonactive(status):
+    c=Client();receive(c,payload());next(iter(docs(c,'subscriptions').values()))['status']=status;data=renewal_payload();receive(c,data)
+    assert event_root(c,data)['business_reason_codes']==['subscription_not_active'];assert_shared(c,1)
+
+
+def test_renewal_proven_retry_preserves_later_states():
+    c=Client();receive(c,payload());data=renewal_payload();receive(c,data)
+    next(iter(docs(c,'subscriptions').values()))['status']='canceled'
+    for item in docs(c,'entitlements').values():item['status']='revoked'
+    for item in docs(c,'purchases').values():item['status']='refunded'
+    before=copy.deepcopy({k:v for k,v in c.data.items() if not k.startswith('kirvano_events/')});receive(c,data)
+    assert event_root(c,data)['business_status']=='applied'
+    assert {k:v for k,v in c.data.items() if not k.startswith('kirvano_events/')}==before
+
+
+@pytest.mark.parametrize('field,value',[('account_status','blocked'),('activation_status','suspended'),('activation_status','active'),('activation_status','pending')])
+def test_renewal_user_states_preserved(field,value):
+    c=Client();receive(c,payload());next(iter(docs(c,'users').values()))[field]=value;receive(c,renewal_payload())
+    assert next(iter(docs(c,'users').values()))[field]==value;assert_shared(c,2)
+
+
+def test_renewal_out_of_order():
+    c=Client();receive(c,payload());receive(c,renewal_payload(3,'2026-12-05 12:00:00','2027-01-05 12:00:00'));receive(c,renewal_payload())
+    assert_shared(c,3)
+
+
+@pytest.mark.parametrize('start',['2026-11-10 12:00:00','2026-10-25 12:00:00'])
+def test_renewal_gap_overlap_preserved(start):
+    c=Client();receive(c,payload());prior=copy.deepcopy(docs(c,'entitlements'));data=renewal_payload(start=start);receive(c,data)
+    for key,value in prior.items():assert c.data[key]==value
+    application=event_root(c,data)['application'];new=c.data['entitlements/'+application['entitlement_id']]
+    candidate=prepared(data)[1].candidate
+    assert (new['valid_from'],new['valid_until'])==(candidate.valid_from,candidate.valid_until);assert_shared(c,2)
+
+
+@pytest.mark.parametrize('reverse',[False,True])
+def test_same_charge_different_events_review(reverse):
+    c=Client();receive(c,payload());renewal=renewal_payload();sale=copy.deepcopy(renewal);sale['event']='SALE_APPROVED'
+    first,second=(renewal,sale) if reverse else (sale,renewal)
+    receive(c,first);before=copy.deepcopy({k:v for k,v in c.data.items() if not k.startswith('kirvano_events/')});receive(c,second)
+    assert event_root(c,second)['business_reason_codes']==['commercial_binding_mismatch']
+    assert {k:v for k,v in c.data.items() if not k.startswith('kirvano_events/')}==before;assert_shared(c,2)
+
+
+def test_renewal_conflict_preserves_application():
+    c=Client();receive(c,payload());data=renewal_payload();receive(c,data);application=copy.deepcopy(event_root(c,data)['application'])
+    data['total_price']='20';receive(c,data)
+    assert event_root(c,data)['processing_status']=='conflict'
+    assert event_root(c,data)['application']==application;assert_shared(c,2)
+
+
+@pytest.mark.parametrize('collection',['purchases','entitlements'])
+def test_renewal_partial_pair_aborts(collection):
+    c=Client();receive(c,payload());data=renewal_payload();receive(c,data)
+    del c.data[collection+'/'+event_root(c,data)['application']['purchase_id' if collection=='purchases' else 'entitlement_id']]
+    event_root(c,data).pop('application');event_root(c,data)['business_status']='review_required';before=copy.deepcopy(c.data)
+    with pytest.raises(RuntimeError):receive(c,data)
+    assert c.data==before
+
+
+def test_renewal_aborted_attempt_no_writes():
+    c=Client();receive(c,payload());before=copy.deepcopy(c.data);receive(c,renewal_payload(),False)
+    assert c.data==before
