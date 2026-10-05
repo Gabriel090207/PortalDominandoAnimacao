@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.health import router as health_router
+from app.api.kirvano import router as kirvano_router
 
 
 
@@ -32,3 +33,4 @@ def home():
 
 
 app.include_router(health_router)
+app.include_router(kirvano_router)
