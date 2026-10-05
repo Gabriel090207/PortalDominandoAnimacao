@@ -14,6 +14,11 @@ class KirvanoDiagnosticTests(unittest.TestCase):
         loader = patch('app.api.kirvano.load_dotenv')
         loader.start()
         self.addCleanup(loader.stop)
+        from app.domain.kirvano_event import ReceiptResult
+        from app.domain.states import KirvanoEventState
+        recorder = patch('app.api.kirvano.register_event', return_value=ReceiptResult('a'*64, KirvanoEventState.REVIEW_REQUIRED, 'review_required'))
+        self.recorder = recorder.start()
+        self.addCleanup(recorder.stop)
         self.client = TestClient(app, headers={'security-token':'test-configured-secret'})
 
     def test_valid_json(self):
@@ -49,6 +54,7 @@ class KirvanoDiagnosticTests(unittest.TestCase):
         self.assertNotIn('cookie',output.lower())
         self.assertNotIn('SALE_APPROVED',output)
         self.assertIn('body_bytes=',output)
+        self.recorder.assert_called_once()
 
     def test_untrusted_labels_not_logged(self):
         with self.assertLogs('uvicorn.error.kirvano',level='INFO') as logs:
@@ -63,6 +69,7 @@ class KirvanoDiagnosticTests(unittest.TestCase):
                 response=unauthenticated.post('/webhooks/kirvano',json={},headers=headers)
             self.assertEqual(response.status_code,401)
             self.assertEqual(response.json(),{'detail':'Unauthorized'})
+            self.recorder.assert_not_called()
 
     def test_missing_or_empty_configuration(self):
         import os
@@ -73,10 +80,17 @@ class KirvanoDiagnosticTests(unittest.TestCase):
                 response=self.client.post('/webhooks/kirvano',json={})
             self.assertEqual(response.status_code,401)
             self.assertEqual(response.json(),{'detail':'Unauthorized'})
+            self.recorder.assert_not_called()
 
     def test_duplicate_token_rejected(self):
         response=TestClient(app).post('/webhooks/kirvano',json={},headers=[('security-token','test-configured-secret'),('security-token','test-configured-secret')])
         self.assertEqual(response.status_code,401)
+
+    def test_storage_failure(self):
+        self.recorder.side_effect = RuntimeError('sensitive error')
+        response=self.client.post('/webhooks/kirvano',json={})
+        self.assertEqual(response.status_code,503)
+        self.assertEqual(response.json(),{'detail':'Service unavailable'})
 
     def test_existing_routes(self):
         for path in ['/','/health','/openapi.json']:self.assertEqual(self.client.get(path).status_code,200)

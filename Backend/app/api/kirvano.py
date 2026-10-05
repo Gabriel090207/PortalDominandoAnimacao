@@ -1,4 +1,4 @@
-"""Authenticated reception only; no persistence or commercial side effects."""
+"""Authenticated reception only; idempotent receipt persistence, no commercial side effects."""
 import json
 import logging
 import hmac
@@ -8,6 +8,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from fastapi import APIRouter, HTTPException, Request
+from starlette.concurrency import run_in_threadpool
+
+from app.services.kirvano_event_service import register_event
 
 router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
 logger = logging.getLogger("uvicorn.error.kirvano")
@@ -45,10 +48,13 @@ async def receive_kirvano(request: Request):
             raise HTTPException(status_code=413, detail="Request body too large")
         body.extend(chunk)
     try:
-        json.loads(body, parse_constant=_reject_json_constant)
+        payload = json.loads(body, parse_constant=_reject_json_constant)
     except (ValueError, UnicodeError, RecursionError):
         raise HTTPException(status_code=400, detail="Invalid JSON") from None
 
-    # Fixed labels and measured size only: never log headers or payload fields.
-    logger.info("Kirvano webhook received: method=POST path=/webhooks/kirvano body_bytes=%d", len(body))
+    try:
+        result = await run_in_threadpool(register_event, payload)
+    except Exception:
+        raise HTTPException(status_code=503, detail="Service unavailable") from None
+    logger.info("Kirvano webhook stored: body_bytes=%d logical_id=%s processing_status=%s outcome=%s", len(body), result.logical_id, result.processing_status.value, result.outcome)
     return {"received": True}

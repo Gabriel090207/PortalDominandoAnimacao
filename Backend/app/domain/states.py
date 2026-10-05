@@ -59,3 +59,9 @@ class SessionRevocationReason(StrEnum):
 
 class ResourceKey(StrEnum):
     PORTAL = "portal"
+
+
+class KirvanoEventState(StrEnum):
+    RECEIVED = "received"
+    REVIEW_REQUIRED = "review_required"
+    CONFLICT = "conflict"
