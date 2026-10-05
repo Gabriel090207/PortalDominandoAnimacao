@@ -19,6 +19,33 @@ def record_event(event):
 def _record_transaction(transaction, root, variant, event):
     main_snapshot = root.get(transaction=transaction)
     variant_snapshot = variant.get(transaction=transaction)
+    plan, result = prepare_receipt(root, variant, event, main_snapshot, variant_snapshot)
+    plan.apply(transaction)
+    return result
+
+
+class WritePlan:
+    """In-memory writes only; permits all transaction reads before application."""
+    def __init__(self):
+        self.operations = []
+
+    def create(self, ref, data):
+        self.operations.append(("create", ref, dict(data)))
+
+    def update(self, ref, data):
+        for operation, target, pending in self.operations:
+            if target == ref:
+                pending.update(data)
+                return
+        self.operations.append(("update", ref, dict(data)))
+
+    def apply(self, transaction):
+        for operation, ref, data in self.operations:
+            getattr(transaction, operation)(ref, data)
+
+
+def prepare_receipt(root, variant, event, main_snapshot, variant_snapshot):
+    transaction = WritePlan()
     timestamp = firestore.SERVER_TIMESTAMP
     if not main_snapshot.exists:
         if variant_snapshot.exists:raise RuntimeError('Invalid event storage structure')
@@ -46,4 +73,4 @@ def _record_transaction(transaction, root, variant, event):
         transaction.update(root,changes)
     if not variant_snapshot.exists:
         transaction.create(variant,{'normalization_version':1,'normalized_payload':event.normalized_payload,'validation_issues':list(event.validation_issues),'first_received_at':timestamp,'last_received_at':timestamp,'receipt_count':1})
-    return ReceiptResult(event.logical_id,state,outcome)
+    return transaction, ReceiptResult(event.logical_id,state,outcome)

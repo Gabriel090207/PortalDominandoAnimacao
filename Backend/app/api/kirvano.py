@@ -1,4 +1,4 @@
-"""Authenticated reception only; idempotent receipt persistence, no commercial side effects."""
+"""Authenticated reception with atomic SALE_APPROVED commerce and inbox recording."""
 import json
 import logging
 import hmac
@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Request
 from starlette.concurrency import run_in_threadpool
 
-from app.services.kirvano_event_service import register_event
+from app.services.kirvano_commerce_service import receive_commercial_event as register_event
 
 router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
 logger = logging.getLogger("uvicorn.error.kirvano")
@@ -25,7 +25,7 @@ def _reject_json_constant(value: str):
 @router.post("/kirvano")
 async def receive_kirvano(request: Request):
     # Token transport confirmed by a real Kirvano request: security-token.
-    # Authentication does not grant access or trigger commercial processing.
+    # Commercial effects require the separate validated SALE_APPROVED contract.
     load_dotenv(_BACKEND_ROOT / ".env", override=False)
     expected = os.getenv("KIRVANO_WEBHOOK_TOKEN", "")
     received = request.headers.getlist("security-token")

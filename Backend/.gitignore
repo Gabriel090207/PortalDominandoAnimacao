@@ -12,3 +12,5 @@ __pycache__/
 !.env.example
 firebase-key.json
 credentials/
+firestore-debug.log
+firebase-debug.log
