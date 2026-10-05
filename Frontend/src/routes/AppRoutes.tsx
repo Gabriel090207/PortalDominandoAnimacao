@@ -8,7 +8,6 @@ import {
 import MainLayout from "../layouts/MainLayout";
 
 import Login from "../pages/Login/Login";
-import TelegramCallback from "../pages/TelegramCallback/TelegramCallback";
 
 import Dashboard from "../pages/Dashboard/Dashboard";
 import Video from "../pages/Video/Video";
@@ -29,13 +28,6 @@ const AppRoutes = () => {
         <Route
           path="/"
           element={<Login />}
-        />
-
-
-        {/* Retorno Telegram */}
-        <Route
-          path="/telegram/callback"
-          element={<TelegramCallback />}
         />
 
 

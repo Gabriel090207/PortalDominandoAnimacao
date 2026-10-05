@@ -2,46 +2,15 @@ import {
   ArrowRight,
   Mail,
   Moon,
-  Send,
   Sparkles,
 } from "lucide-react";
 
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-import {
-  getTelegramLogin,
-} from "../../services/telegramservice";
 
 import "./Login.css";
 
 const Login = () => {
 const navigate = useNavigate();
-
-const [isLoadingTelegramLogin, setIsLoadingTelegramLogin] = useState(false);
-
-const handleOpenTelegramLogin = async () => {
-  setIsLoadingTelegramLogin(true);
-
-  try {
-    const { url } = await getTelegramLogin();
-
-    console.log("URL TELEGRAM:", url);
-
-    window.open(
-      url,
-      "_blank"
-    );
-
-  } catch (error) {
-    console.error(
-      "Erro ao iniciar login Telegram:",
-      error
-    );
-
-    setIsLoadingTelegramLogin(false);
-  }
-};
 
   return (
     <main className="login-page">
@@ -83,44 +52,8 @@ const handleOpenTelegramLogin = async () => {
           </h2>
 
           <p className="login-card__description">
-            Entre com o Telegram ou receba um código pelo seu e-mail.
+            Receba um código pelo seu e-mail.
           </p>
-
-          <button
-              className="login-telegram-button"
-              type="button"
-              onClick={handleOpenTelegramLogin}
-              disabled={isLoadingTelegramLogin}
-            >
-              {isLoadingTelegramLogin ? (
-                <>
-                  <span className="login-telegram-loading">
-                    <span className="login-telegram-spinner" />
-                    Conectando ao Telegram...
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Send size={20} strokeWidth={2.2} />
-
-                  <span>Entrar com Telegram</span>
-
-                  <ArrowRight
-                    className="login-telegram-button__arrow"
-                    size={19}
-                    strokeWidth={2}
-                  />
-                </>
-              )}
-            </button>
-                                
-          <div className="login-divider">
-            <span className="login-divider__line" />
-
-            <span className="login-divider__text">OU</span>
-
-            <span className="login-divider__line" />
-          </div>
 
           <form
             className="login-form"

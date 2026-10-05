@@ -7,3 +7,8 @@ __pycache__/
 .vscode/
 
 .DS_Store
+
+.env.*
+!.env.example
+firebase-key.json
+credentials/
