@@ -13,6 +13,7 @@ class CollectionName(StrEnum):
     AUTH_THROTTLES = "auth_throttles"
     USER_SESSIONS = "user_sessions"
     ADMINS = "admins"
+    ADMIN_BOOTSTRAP = "admin_bootstrap"
     ADMIN_SESSIONS = "admin_sessions"
     KIRVANO_EVENTS = "kirvano_events"
     TRANSACTIONAL_EMAILS = "transactional_emails"
