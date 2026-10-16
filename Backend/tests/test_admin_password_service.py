@@ -78,7 +78,7 @@ def test_other_argon_types_rejected():
 def test_no_io_environment_firebase_or_retained_password():
     source = Path(service.__file__).read_text()
     tree = ast.parse(source)
-    assert all(node.module in {"base64", "binascii", "argon2", "argon2.exceptions"} for node in ast.walk(tree)
+    assert all(node.module in {"base64", "binascii", "threading", "argon2", "argon2.exceptions"} for node in ast.walk(tree)
                if isinstance(node, ast.ImportFrom))
     assert not any(isinstance(node, ast.Import) for node in ast.walk(tree))
     assert not any(isinstance(node, ast.Call) and isinstance(node.func, ast.Name)

@@ -1,10 +1,12 @@
 """Synchronous password cryptography only; no environment, persistence or logs.
 
-Future async callers must offload this work and bound concurrent hashing.
+Future async callers must offload this work. Verification has a process-local
+nonblocking capacity limit; password hashing/provisioning remains unchanged.
 Parameters are an initial interactive baseline, not a Render benchmark.
 """
 from base64 import b64decode, b64encode
 from binascii import Error as Base64Error
+from threading import BoundedSemaphore
 
 from argon2 import PasswordHasher, Type, extract_parameters
 from argon2.exceptions import (
@@ -14,6 +16,8 @@ from argon2.exceptions import (
 MIN_PASSWORD_LENGTH = 15
 MAX_PASSWORD_LENGTH = 256
 MAX_PASSWORD_BYTES = 1024
+MAX_CONCURRENT_ADMIN_PASSWORD_VERIFICATIONS = 1
+_verification_slots = BoundedSemaphore(MAX_CONCURRENT_ADMIN_PASSWORD_VERIFICATIONS)
 
 _HASHER = PasswordHasher(
     type=Type.ID, memory_cost=19456, time_cost=2, parallelism=1,
@@ -31,6 +35,10 @@ class InvalidAdminPasswordHashError(ValueError):
 
 class AdminPasswordHashingError(RuntimeError):
     """Cryptographic operation failed."""
+
+
+class AdminPasswordVerificationUnavailable(RuntimeError):
+    """No verification capacity or unexpected verifier failure; never a mismatch."""
 
 
 def _validate_password(password):
@@ -80,12 +88,19 @@ def hash_admin_password(password: str) -> str:
 def verify_admin_password(password: str, encoded_hash: str) -> bool:
     _validate_password(password)
     _validate_hash(encoded_hash)
+    if not _verification_slots.acquire(blocking=False):
+        raise AdminPasswordVerificationUnavailable("Administrative password verification unavailable.")
     try:
-        return _HASHER.verify(encoded_hash, password)
-    except VerifyMismatchError:
-        return False
-    except (VerificationError, InvalidHashError):
-        raise InvalidAdminPasswordHashError("Invalid stored administrative password hash.") from None
+        try:
+            return _HASHER.verify(encoded_hash, password)
+        except VerifyMismatchError:
+            return False
+        except (VerificationError, InvalidHashError):
+            raise InvalidAdminPasswordHashError("Invalid stored administrative password hash.") from None
+        except Exception:
+            raise AdminPasswordVerificationUnavailable("Administrative password verification unavailable.") from None
+    finally:
+        _verification_slots.release()
 
 
 def needs_admin_password_rehash(encoded_hash: str) -> bool:

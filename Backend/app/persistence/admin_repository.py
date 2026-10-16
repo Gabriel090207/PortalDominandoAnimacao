@@ -1,7 +1,9 @@
-"""Create-only first-owner persistence; no general administrator registration."""
+"""First-owner persistence and bounded lookup; no general admin registration."""
 from google.cloud import firestore
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 from app.domain.admin import AdminRole, AdminStatus
+from app.domain.email import normalize_email
 from app.persistence.admin_records import AdminRecord
 from app.persistence.collections import CollectionName
 
@@ -11,6 +13,39 @@ BOOTSTRAP_DOCUMENT = "first_owner_v1"
 
 class AdminBootstrapError(RuntimeError):
     """Sanitized failure: callers must never expose underlying storage errors."""
+
+
+class AdminLookupError(RuntimeError):
+    """Storage unavailable, duplicate identity or invalid administrative record."""
+
+
+class AdminRepository:
+    def __init__(self, client):
+        self.client = client
+
+    def find_by_email(self, email_normalized):
+        """Indexed equality query, at most two documents; duplicates fail closed.
+
+        Works with existing UUID documents, without a production migration.
+        Future writers must enforce normalized-email uniqueness transactionally.
+        """
+        try:
+            if normalize_email(email_normalized) != email_normalized:
+                raise ValueError
+            snapshots = list(self.client.collection(CollectionName.ADMINS.value).where(
+                filter=FieldFilter("email_normalized", "==", email_normalized)
+            ).limit(2).stream(timeout=10))
+            if len(snapshots) > 1:
+                raise AdminLookupError("Administrator lookup failed.")
+            if not snapshots:
+                return None
+            snapshot = snapshots[0]
+            record = AdminRecord.from_document(snapshot.to_dict())
+            if record.admin_id != snapshot.id or record.email_normalized != email_normalized:
+                raise ValueError
+            return record
+        except Exception:
+            raise AdminLookupError("Administrator lookup failed.") from None
 
 
 def create_first_owner(client, record: AdminRecord):
