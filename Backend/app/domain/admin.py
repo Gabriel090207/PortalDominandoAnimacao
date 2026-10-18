@@ -49,6 +49,8 @@ _ROLE_PERMISSIONS = MappingProxyType({
     AdminRole.OPERATOR: frozenset({
         AdminPermission.READ_CUSTOMERS, AdminPermission.READ_DASHBOARD,
         AdminPermission.READ_AUDIT, AdminPermission.ACTIVATE_CUSTOMER,
+        AdminPermission.SUSPEND_CUSTOMER, AdminPermission.RESUME_CUSTOMER,
+        AdminPermission.BLOCK_CUSTOMER, AdminPermission.UNBLOCK_CUSTOMER,
     }),
 })
 _PositiveVersion = Annotated[int, Field(strict=True, gt=0)]

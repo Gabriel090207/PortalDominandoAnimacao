@@ -17,6 +17,25 @@ def _single_header(request, name):
     return values[0].decode('ascii')
 
 
+class AdminOriginSecurity:
+    """Origin-only dependency for reads; shares mutation origin rules."""
+    def __init__(self, config: AdminRequestSecurityConfig):
+        try:
+            if not isinstance(config, AdminRequestSecurityConfig):
+                raise ValueError
+            self.config = AdminRequestSecurityConfig(config.allowed_origins)
+        except Exception:
+            raise AdminRequestSecurityConfigurationError() from None
+
+    async def __call__(self, request: Request):
+        try:
+            origin = validate_origin(_single_header(request, b'origin'))
+            if origin not in self.config.allowed_origins:
+                raise ValueError
+        except Exception:
+            raise HTTPException(status_code=403, detail='Administrative request rejected.') from None
+
+
 class AdminRequestSecurity:
     def __init__(self, config: AdminRequestSecurityConfig, *, requires_json=True):
         # Revalidate even injected configuration; no defaults for trusted origins.
@@ -27,15 +46,14 @@ class AdminRequestSecurity:
         except Exception:
             raise AdminRequestSecurityConfigurationError() from None
         self.requires_json = requires_json
+        self.origin_security = AdminOriginSecurity(self.config)
 
     async def __call__(self, request: Request):
         if request.method not in _MUTATION_METHODS:
             raise HTTPException(status_code=405, detail='Administrative mutation method required.',
                                 headers={'Allow': ', '.join(_MUTATION_METHODS)})
+        await self.origin_security(request)
         try:
-            origin = validate_origin(_single_header(request, b'origin'))
-            if origin not in self.config.allowed_origins:
-                raise ValueError
             if _single_header(request, b'x-admin-request') != ADMIN_REQUEST_VALUE:
                 raise ValueError
         except Exception:

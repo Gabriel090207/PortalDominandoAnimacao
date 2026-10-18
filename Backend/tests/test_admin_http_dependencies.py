@@ -35,7 +35,7 @@ test_app.__test__ = False
     ('owner', AdminPermission.BLOCK_CUSTOMER, 200),
     ('operator', AdminPermission.READ_CUSTOMERS, 200),
     ('operator', AdminPermission.ACTIVATE_CUSTOMER, 200),
-    ('operator', AdminPermission.BLOCK_CUSTOMER, 403),
+    ('operator', AdminPermission.BLOCK_CUSTOMER, 200),
 ])
 def test_permissions_from_validated_admin(role, permission, status):
     service = Mock()

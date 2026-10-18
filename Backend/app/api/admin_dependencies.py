@@ -39,12 +39,17 @@ def _session_cookie(request):
         raise _unauthorized() from None
 
 
+def read_admin_session_token(request: Request) -> str:
+    """Shared strict cookie reader, without requiring a currently active session."""
+    return _session_cookie(request)
+
+
 class AdminHTTPAuthentication:
     def __init__(self, session_service):
         self.session_service = session_service
 
     async def __call__(self, request: Request) -> Admin:
-        token = _session_cookie(request)
+        token = read_admin_session_token(request)
         try:
             administrator = await run_in_threadpool(self.session_service.validate, token)
             if administrator is not None and (

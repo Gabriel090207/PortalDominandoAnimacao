@@ -33,7 +33,8 @@ def session(**changes):
 
 
 def test_exact_permission_matrix():
-    operator = {"read_customers", "read_dashboard", "read_audit", "activate_customer"}
+    operator = {"read_customers", "read_dashboard", "read_audit", "activate_customer",
+                "suspend_customer", "resume_customer", "block_customer", "unblock_customer"}
     assert {p.value for p in AdminPermission if role_has_permission(AdminRole.OPERATOR, p)} == operator
     assert all(role_has_permission(AdminRole.OWNER, p) for p in AdminPermission)
     assert set(AdminRole) == {"owner", "operator"}
