@@ -1,5 +1,7 @@
 # Ativação manual — passo 58
 
+> Atualização PASSO 70: assinatura cancelada não sustenta acesso, mesmo durante o período anteriormente pago. Ativação e retomada verificam a assinatura vinculada. Consulte [COMMERCIAL_ACCESS.md](COMMERCIAL_ACCESS.md); as descrições do período pago abaixo refletem o comportamento histórico anterior quando divergirem.
+
 POST /admin/customers/{customer_id}/activate, na composição administrativa
 isolada. Não registrado em app.main nem publicado. Nenhuma UI foi modificada.
 

@@ -1,4 +1,5 @@
 """Synthetic evidence, authorization and manual-activation invariants."""
+from app.domain.models import PortalEntitlement
 from types import SimpleNamespace
 from unittest.mock import Mock
 import pytest
@@ -101,7 +102,7 @@ def test_approval_with_pending_activation_denies_portal():
     key,user=next(iter(docs(c,'users').items()));right=next(iter(docs(c,'entitlements').values()))
     assert user['activation_status']=='pending'
     state=UserAccessState(account_status=user['account_status'],activation_status=user['activation_status'])
-    entitlement=Entitlement(**{key:right[key] for key in ('user_id','resource_key','status','valid_from','valid_until')})
+    entitlement=PortalEntitlement(purchase_id="synthetic-purchase",subscription_id="synthetic-subscription",subscription_status="active",**{key:right[key] for key in ('user_id','resource_key','status','valid_from','valid_until')})
     assert entitlement.is_valid_at(right['valid_from'])
     assert not can_access_portal(key.split('/')[1],state,[entitlement],now=right['valid_from'])
 

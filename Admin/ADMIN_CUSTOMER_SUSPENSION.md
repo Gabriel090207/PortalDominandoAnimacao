@@ -73,3 +73,9 @@ Somente Admin/ foi alterado. Backend e Frontend dos alunos foram preservados.
 O router do Backend continua isolado fora de app.main; a integração depende de
 habilitação futura aprovada e validação operacional das configurações de produção.
 Não há retomada, bloqueio/desbloqueio, alteração financeira ou publicação neste passo.
+
+Validação final: **259 testes aprovados, zero falhas**, incluindo 54 novos casos;
+`npm run typecheck`, `npm run build`, `npm run lint` e `git diff --check` aprovados.
+A comparação SHA-256 com o snapshot inicial confirmou Backend/ e Frontend/ intactos
+nos arquivos-fonte/configuração/documentação (excluídos diretórios de dependências,
+cache e artefatos de build). Nenhuma dependência foi instalada.

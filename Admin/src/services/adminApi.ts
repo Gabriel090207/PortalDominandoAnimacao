@@ -40,6 +40,11 @@ export interface CustomerSuspensionResult {
   activation_status:'suspended'
   result:'suspended'|'already_suspended'
 }
+export interface CustomerResumptionResult {
+  customer_id:string
+  activation_status:'active'
+  result:'resumed'|'already_active'
+}
 export interface CustomerQuery { limit?: number; cursor?: string }
 
 // One URL segment, with the same document-ID constraints as the backend.
@@ -159,6 +164,14 @@ export function createAdminApi(apiURL: string, adapter?: AxiosAdapter) {
         || !['suspended','already_suspended'].includes(data.result)) throw new AdminApiError('unexpected_response')
       return {customer_id:data.customer_id,activation_status:'suspended',result:data.result}
     },
+    async resumeCustomer(customerId: string): Promise<CustomerResumptionResult> {
+      const path = `${customerPath(customerId)}/resume`
+      const data = await request('customers', () => http.post<CustomerResumptionResult>(path,
+        {confirm_resumption:true}, {headers: {'Content-Type':'application/json','X-Admin-Request':'1'}}))
+      if (!data || data.customer_id !== customerId || data.activation_status !== 'active'
+        || !['resumed','already_active'].includes(data.result)) throw new AdminApiError('unexpected_response')
+      return {customer_id:data.customer_id,activation_status:'active',result:data.result}
+    },
     async getPurchaseConfirmation(customerId: string): Promise<AdminPurchaseConfirmation> {
       const path = `${customerPath(customerId)}/purchase-confirmation`
       const data = await request('customers', () => http.get<AdminPurchaseConfirmation>(path))
@@ -212,3 +225,5 @@ export const getAdminPurchaseConfirmation = (customerId: string) => configuredAp
 export const activateAdminCustomer = (customerId: string) => configuredApi().activateCustomer(customerId)
 
 export const suspendAdminCustomer = (customerId: string) => configuredApi().suspendCustomer(customerId)
+
+export const resumeAdminCustomer = (customerId: string) => configuredApi().resumeCustomer(customerId)

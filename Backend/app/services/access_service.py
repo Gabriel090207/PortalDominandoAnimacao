@@ -2,8 +2,8 @@
 from collections.abc import Iterable
 from datetime import datetime
 
-from app.domain.models import Entitlement, UserAccessState
-from app.domain.states import AccountStatus, ActivationStatus, ResourceKey
+from app.domain.models import Entitlement, PortalEntitlement, UserAccessState
+from app.domain.states import AccountStatus, ActivationStatus, CommercialStatus, ResourceKey
 
 
 def can_access_portal(
@@ -15,7 +15,9 @@ def can_access_portal(
         user.account_status == AccountStatus.ENABLED
         and user.activation_status == ActivationStatus.ACTIVE
         and any(
-            right.user_id == user_id
+            isinstance(right, PortalEntitlement)
+            and right.subscription_status == CommercialStatus.ACTIVE
+            and right.user_id == user_id
             and right.resource_key == ResourceKey.PORTAL
             and right.is_valid_at(now)
             for right in entitlements

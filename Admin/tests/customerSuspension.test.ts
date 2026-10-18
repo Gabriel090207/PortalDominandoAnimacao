@@ -128,3 +128,15 @@ for(const role of ['owner','operator'] as const)test(`suspension eligibility for
  for(const status of ['checking','unauthenticated','error'] as const)assert.equal(canSuspendCustomer(CUSTOMER,{status}),false)
  assert.equal(canSuspendCustomer(CUSTOMER,{...session,loggingOut:true}),false)
 })
+
+for(const code of ['ECONNABORTED','ERR_NETWORK'])test(`${code} is sanitized and never retries suspension transport`,async()=>{
+ let calls=0
+ const api=createAdminApi('https://api.example.test',async config=>{
+  calls++;throw new AxiosError('synthetic-sensitive-detail',code,config)
+ })
+ await assert.rejects(api.suspendCustomer('synthetic'),(error:unknown)=>{
+  assert.ok(error instanceof AdminApiError);assert.equal(error.kind,'network');assert.equal(error.status,undefined)
+  assert.ok(!JSON.stringify(error).includes('synthetic-sensitive-detail'));assert.equal('config' in error,false);return true
+ })
+ assert.equal(calls,1)
+})

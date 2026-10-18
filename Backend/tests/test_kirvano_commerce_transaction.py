@@ -1,3 +1,4 @@
+from app.domain.models import PortalEntitlement
 import copy
 from unittest.mock import patch
 from uuid import uuid4
@@ -376,13 +377,13 @@ def test_cancellation_access_boundaries_and_user_states():
     from app.services.access_service import can_access_portal
     c=Client();receive(c,payload());receive(c,cancellation_payload())
     stored=next(iter(docs(c,'entitlements').values()))
-    right=Entitlement(**{k:stored[k] for k in ('user_id','resource_key','status','valid_from','valid_until')})
+    right=PortalEntitlement(purchase_id="synthetic-purchase",subscription_id="synthetic-subscription",subscription_status=next(iter(docs(c,'subscriptions').values()))['status'],**{k:stored[k] for k in ('user_id','resource_key','status','valid_from','valid_until')})
     enabled=UserAccessState(account_status='enabled',activation_status='active')
     end=right.valid_until
-    assert can_access_portal(right.user_id,enabled,[right],now=end-timedelta(seconds=1))
+    assert not can_access_portal(right.user_id,enabled,[right],now=end-timedelta(seconds=1))
     for now in (end,end+timedelta(seconds=1)):
         assert not can_access_portal(right.user_id,enabled,[right],now=now)
-    other=right.model_copy(update={'valid_from':end,'valid_until':end+timedelta(days=1)})
+    other=right.model_copy(update={'valid_from':end,'valid_until':end+timedelta(days=1),'subscription_id':'other-valid-subscription','subscription_status':'active'})
     assert can_access_portal(right.user_id,enabled,[right,other],now=end)
     for state in (UserAccessState(account_status='blocked',activation_status='active'),
                   UserAccessState(account_status='enabled',activation_status='suspended')):

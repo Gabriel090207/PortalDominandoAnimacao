@@ -22,12 +22,14 @@ export function createCustomerAccessStore(customerId:string,options:{
   let state=empty(),generation=0
   let inFlight:Promise<void>|undefined
   let committedMessage:string|undefined
+  let reconciled=false
   const listeners=new Set<()=>void>()
   function publish(next:CustomerAccessState){state=next;listeners.forEach(listener=>listener())}
   async function readBack(current:number,confirmedMessage?:string){
     try{
       await options.refresh()
       if(current!==generation)return
+      reconciled=true
       release()
       publish({status:confirmedMessage?'confirmed':'idle',consent:false,
         message:confirmedMessage??'Situação atualizada. Confira os dados antes de uma nova tentativa.'})
@@ -38,10 +40,15 @@ export function createCustomerAccessStore(customerId:string,options:{
         message:confirmedMessage?`${confirmedMessage} Não foi possível atualizar a ficha. Atualize a situação do cliente.`:uncertain})
     }
   }
+  function canOpen(){
+    return (state.status==='idle'||(state.status==='confirmed'&&reconciled))
+      &&options.canRun()&&options.coordinator?.getSnapshot()===undefined
+  }
   return {
+    canOpen,
     getSnapshot:()=>state,
     subscribe(listener:()=>void){listeners.add(listener);return()=>{listeners.delete(listener)}},
-    open(){if(state.status==='idle'&&options.canRun()&&acquire())publish({status:'confirming',consent:false})},
+    open(){if(canOpen()&&acquire()){reconciled=false;committedMessage=undefined;publish({status:'confirming',consent:false})}},
     consent(value:boolean){if(state.status==='confirming')publish({...state,consent:value===true})},
     cancel(){if(state.status==='confirming'){release();publish(empty())}},
     submit():Promise<void>{
@@ -77,13 +84,14 @@ export function createCustomerAccessStore(customerId:string,options:{
       if(inFlight)return inFlight
       if(!['error','uncertain','confirmed'].includes(state.status))return Promise.resolve()
       if(!acquire())return Promise.resolve()
+      reconciled=false
       const confirmedMessage=state.status==='confirmed'?committedMessage:undefined
       const current=++generation
       publish({status:'refreshing',consent:false,message:confirmedMessage})
       const promise=readBack(current,confirmedMessage).finally(()=>{if(current===generation)inFlight=undefined})
       inFlight=promise;return promise
     },
-    clear(){release();generation++;inFlight=undefined;committedMessage=undefined;publish(empty())},
+    clear(){reconciled=false;release();generation++;inFlight=undefined;committedMessage=undefined;publish(empty())},
   }
 }
 export type CustomerAccessStore=ReturnType<typeof createCustomerAccessStore>

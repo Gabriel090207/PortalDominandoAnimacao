@@ -1,4 +1,5 @@
 """Real SDK transactions against the guarded synthetic emulator only."""
+from app.domain.models import PortalEntitlement
 import copy
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
@@ -38,7 +39,7 @@ def test_http_suspension_atomic_preserves_commerce_and_denies_access(emulator_cl
     token=composed.session_service.create(admin(role=role)).token.get_secret_value()
     before=state(emulator_client)
     right=next(emulator_client.collection('entitlements').stream(timeout=5)).to_dict()
-    entitlement=Entitlement(**{k:right[k] for k in ('user_id','resource_key','status','valid_from','valid_until')})
+    entitlement=PortalEntitlement(purchase_id="synthetic-purchase",subscription_id="synthetic-subscription",subscription_status="active",**{k:right[k] for k in ('user_id','resource_key','status','valid_from','valid_until')})
     assert can_access_portal('customer-a',UserAccessState(account_status='enabled',activation_status='active'),[entitlement],now=now)
     headers={'Origin':ORIGIN,'Cookie':'__Host-admin_session='+token,'X-Admin-Request':'1'}
     with TestClient(app) as http:

@@ -1,4 +1,5 @@
 """Manual restriction contracts using the existing synthetic transactional store."""
+from app.domain.models import PortalEntitlement
 import copy
 from unittest.mock import Mock
 import pytest
@@ -112,7 +113,7 @@ def test_atomic_restriction_and_idempotence(monkeypatch,role):
     data['subscriptions/sentinel']={'status':'active','unknown':'preserved'}
     before=copy.deepcopy(data)
     right=next(v for k,v in data.items() if k.startswith('entitlements/'))
-    entitlement=Entitlement(**{k:right[k] for k in ('user_id','resource_key','status','valid_from','valid_until')})
+    entitlement=PortalEntitlement(purchase_id="synthetic-purchase",subscription_id="synthetic-subscription",subscription_status="active",**{k:right[k] for k in ('user_id','resource_key','status','valid_from','valid_until')})
     assert can_access_portal('customer-a',UserAccessState(account_status='enabled',activation_status='active'),[entitlement],now=repo.clock())
     assert repo.suspend('customer-a',admin(role=role)).result=='suspended'
     assert data['users/customer-a']==before['users/customer-a']|{'activation_status':'suspended'}

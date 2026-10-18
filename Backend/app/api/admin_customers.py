@@ -7,12 +7,13 @@ from app.api.admin_auth import _NoStoreAdminRoute
 from app.api.admin_dependencies import AdminHTTPAuthentication
 from app.api.admin_request_security import AdminOriginSecurity, AdminRequestSecurity
 from app.domain.admin import AdminPermission, Admin
+from app.domain.admin_resumption import CustomerResumptionResult, CustomerResumptionConflict
 from app.domain.admin_suspension import CustomerSuspensionResult, CustomerSuspensionConflict
 from app.domain.admin_activation import CustomerActivationResult, CustomerActivationConflict
 from app.domain.admin_customers import AdminCustomer, AdminCustomerPage, AdminPurchaseConfirmation, InvalidCustomerPagination, InvalidCustomerIdentifier, InvalidCustomerLookup, AmbiguousCustomerLookup
 
 
-def create_admin_customers_router(*,session_service,customers_service,security_config,activation_service=None,suspension_service=None):
+def create_admin_customers_router(*,session_service,customers_service,security_config,activation_service=None,suspension_service=None,resumption_service=None):
     authentication=AdminHTTPAuthentication(session_service)
     origin=AdminOriginSecurity(security_config)
     router=APIRouter(prefix='/admin',tags=['Admin customers'],route_class=_NoStoreAdminRoute)
@@ -175,6 +176,44 @@ def create_admin_customers_router(*,session_service,customers_service,security_c
             raise HTTPException(status_code=409,detail='Customer suspension preconditions not satisfied.') from None
         except Exception:
             raise HTTPException(status_code=503,detail='Customer suspension not confirmed.') from None
+        if result is None:raise HTTPException(status_code=404,detail='Customer not found.')
+        return result
+
+    @router.post('/customers/{customer_id}/resume',response_model=CustomerResumptionResult,
+        dependencies=[Depends(lookup_security)])
+    async def resume_customer(customer_id:str,request:Request,
+        administrator:Admin=Depends(authentication.require_permission(AdminPermission.RESUME_CUSTOMER))):
+        if request.query_params:
+            raise HTTPException(status_code=400,detail='Invalid customer resumption request.')
+        body=bytearray()
+        async for chunk in request.stream():
+            if len(body)+len(chunk)>4096:
+                raise HTTPException(status_code=413,detail='Customer resumption request too large.')
+            body.extend(chunk)
+        try:
+            def unique_object(pairs):
+                result={}
+                for key,value in pairs:
+                    if key in result:raise ValueError
+                    result[key]=value
+                return result
+            def invalid_constant(value):raise ValueError
+            data=json.loads(body,object_pairs_hook=unique_object,parse_constant=invalid_constant)
+            if not isinstance(data,dict) or set(data)!={'confirm_resumption'} or data['confirm_resumption'] is not True:
+                raise ValueError
+        except Exception:
+            raise HTTPException(status_code=400,detail='Invalid customer resumption request.') from None
+        try:
+            from app.domain.admin_customers import customer_identifier
+            identifier=customer_identifier(customer_id)
+            if resumption_service is None:raise RuntimeError
+            result=await run_in_threadpool(resumption_service.resume,identifier,administrator)
+        except InvalidCustomerIdentifier:
+            raise HTTPException(status_code=400,detail='Invalid customer identifier.') from None
+        except CustomerResumptionConflict:
+            raise HTTPException(status_code=409,detail='Customer resumption preconditions not satisfied.') from None
+        except Exception:
+            raise HTTPException(status_code=503,detail='Customer resumption not confirmed.') from None
         if result is None:raise HTTPException(status_code=404,detail='Customer not found.')
         return result
 

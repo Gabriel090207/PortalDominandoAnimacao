@@ -1,4 +1,5 @@
 """Synthetic transactional activation, audit and HTTP contracts."""
+from app.domain.models import PortalEntitlement
 import copy
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -22,9 +23,13 @@ from test_admin_sessions import sessions
 PATH='/admin/customers/customer-a/activate'
 
 def records():
-    p=purchase();p['user_id']='customer-a'
+    from test_kirvano_commerce_transaction import Client,receive,docs,payload
+    commerce=Client();receive(commerce,payload())
+    p=next(iter(docs(commerce,'purchases').values()));p['user_id']='customer-a'
+    subscription=next(iter(docs(commerce,'subscriptions').values()));subscription['user_id']='customer-a'
     right_id=digest(['kirvano-entitlement',1,'purchase-a','portal'])
     return {'users/customer-a':document(),'admins/synthetic-admin':admin().model_dump(),
+        'subscriptions/'+p['subscription_id']:subscription,
         'purchases/purchase-a':p,'entitlements/'+right_id:dict(schema_version=1,identity_version=1,
             purchase_id='purchase-a',user_id='customer-a',resource_key='portal',status='granted',
             valid_from=p['valid_from'],valid_until=p['valid_until'],created_at=p['created_at'])}
@@ -34,7 +39,7 @@ def harness(monkeypatch,mode='normal'):
     data=records();client=Mock();writes=[];filters=[]
     now=data['purchases/purchase-a']['valid_from']+timedelta(seconds=1)
     class Collection:
-        def __init__(self,name):self.name=name;self.filters=[];self.bound=None
+        def __init__(self,name):self.name=name;self.filters=[];self.bound=None;self.after=None
         def document(self,id):
             path=self.name+'/'+id
             def get(**kwargs):
@@ -42,6 +47,7 @@ def harness(monkeypatch,mode='normal'):
                 return SimpleNamespace(exists=path in data,id=id,to_dict=lambda:copy.deepcopy(data.get(path)))
             return SimpleNamespace(path=path,get=get)
         def where(self,*,filter):self.filters.append(filter);filters.append(filter);return self
+        def start_after(self,snapshot):self.after=snapshot.id;return self
         def limit(self,value):assert value==1;self.bound=value;return self
         def stream(self,**kwargs):
             assert self.bound==1 and not writes
@@ -52,8 +58,11 @@ def harness(monkeypatch,mode='normal'):
                     if f.op_string=='<=' and actual>f.value:return False
                     if f.op_string=='>' and actual<=f.value:return False
                 return True
-            return [SimpleNamespace(id=k.split('/')[1],to_dict=lambda v=v:copy.deepcopy(v))
-                for k,v in data.items() if k.startswith(self.name+'/') and matches(v)][:1]
+            entries=[(k,v) for k,v in data.items() if k.startswith(self.name+'/') and matches(v)]
+            if self.after is not None:
+                index=next(i for i,(k,_) in enumerate(entries) if k.split('/')[1]==self.after)
+                entries=entries[index+1:]
+            return [SimpleNamespace(id=k.split('/')[1],to_dict=lambda v=v:copy.deepcopy(v)) for k,v in entries][:1]
     client.collection.side_effect=Collection
     tx=Mock()
     tx.update.side_effect=lambda ref,value:writes.append(('update',ref.path,value))
@@ -81,7 +90,7 @@ def test_atomic_transition_audit_and_idempotence(monkeypatch,role):
     repo,data,_=harness(monkeypatch);before=copy.deepcopy(data)
     state=UserAccessState(account_status='enabled',activation_status='pending')
     right=next(v for k,v in data.items() if k.startswith('entitlements/'))
-    entitlement=Entitlement(**{k:right[k] for k in ('user_id','resource_key','status','valid_from','valid_until')})
+    entitlement=PortalEntitlement(purchase_id="synthetic-purchase",subscription_id="synthetic-subscription",subscription_status="active",**{k:right[k] for k in ('user_id','resource_key','status','valid_from','valid_until')})
     now=right['valid_from']+timedelta(seconds=1)
     assert not can_access_portal('customer-a',state,[entitlement],now=now)
     data['admins/synthetic-admin']['role']=role

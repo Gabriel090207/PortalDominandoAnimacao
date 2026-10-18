@@ -1,0 +1,77 @@
+/* Independently adapted from Frontend/src/styles/global.css and pages/Login/Login.css. */
+.session-verification-error {
+  --session-portal-glow:0 0 10px rgba(0,224,255,.15),0 0 25px rgba(0,224,255,.08);
+  position:relative;
+  isolation:isolate;
+  display:grid;
+  place-items:center;
+  width:100%;
+  min-width:0;
+  min-height:100vh;
+  min-height:100dvh;
+  padding:clamp(24px,6vw,64px) clamp(16px,4vw,32px);
+  color:var(--text-primary,#fff);
+  background:radial-gradient(ellipse at 50% 8%,rgba(0,224,255,.08),transparent 45%),
+    radial-gradient(ellipse at 50% 100%,rgba(0,80,255,.05),transparent 55%),var(--bg-color,#050913);
+}
+.session-verification-error__background {
+  position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none;
+}
+.session-verification-error__glow {
+  position:absolute;top:8%;left:50%;width:min(620px,110%);height:360px;
+  border-radius:50%;background:radial-gradient(ellipse,rgba(0,224,255,.1),transparent 70%);
+  transform:translateX(-50%);animation:session-verification-glow 12s ease-in-out infinite alternate;
+}
+.session-verification-error__grid {
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+  background-size:48px 48px;mask-image:linear-gradient(#000,transparent 85%);opacity:.38;
+}
+.session-verification-error__content {width:100%;max-width:536px;min-width:0;animation:session-verification-entry .65s ease both;}
+.session-verification-error__brand {margin-bottom:24px;text-align:center;}
+.session-verification-error__brand > span {font-size:clamp(1.25rem,4vw,1.6rem);font-weight:650;letter-spacing:-.045em;}
+.session-verification-error__brand strong {color:var(--accent-cyan,#00e0ff);font-weight:750;text-shadow:0 0 20px rgba(0,224,255,.16);}
+.session-verification-error__brand p {margin:9px 0 0;color:var(--text-secondary,#a0b3d0);font-size:.78rem;letter-spacing:.06em;}
+.session-verification-error__card {
+  position:relative;min-width:0;padding:32px 24px;text-align:center;
+  border:1px solid rgba(160,179,208,.16);border-radius:22px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(0,224,255,.045),transparent 50%),linear-gradient(145deg,rgba(20,27,45,.94),rgba(8,13,25,.96));
+  box-shadow:0 26px 70px rgba(0,0,0,.42),0 0 0 1px rgba(0,224,255,.025),inset 0 1px 0 rgba(255,255,255,.035);
+}
+.session-verification-error__symbol {
+  display:grid;place-items:center;width:52px;height:52px;margin:0 auto 18px;
+  color:var(--accent-cyan,#00e0ff);background:rgba(0,224,255,.055);border:1px solid rgba(0,224,255,.18);border-radius:16px;
+  box-shadow:var(--session-portal-glow);
+}
+.session-verification-error__symbol svg {width:23px;height:23px;animation:session-verification-spin 2.5s linear infinite;}
+.session-verification-error__eyebrow {margin:0 0 13px;color:var(--accent-cyan,#00e0ff);font-size:.7rem;font-weight:650;letter-spacing:.13em;text-transform:uppercase;}
+.session-verification-error h1 {max-width:100%;margin:0 auto 14px;color:#ffffff;font-size:clamp(1.25rem,2.5vw,1.5rem);font-weight:650;letter-spacing:-.04em;line-height:1.2;text-wrap:balance;overflow-wrap:break-word;}
+.session-verification-error__message {max-width:68ch;margin:0 auto 22px;color:var(--text-secondary,#a0b3d0);font-size:.8rem;line-height:1.65;text-wrap:balance;overflow-wrap:anywhere;}
+.session-verification-error__retry button {
+  display:block;width:100%;min-height:52px;padding:14px 18px;white-space:normal;overflow-wrap:anywhere;
+  font-size:1rem;font-weight:750;line-height:1.5;color:#001317;
+  border:1px solid rgba(255,255,255,.12);border-radius:13px;
+  background:linear-gradient(135deg,rgba(0,224,255,.94),rgba(0,151,255,.96));
+  box-shadow:0 13px 28px rgba(0,119,255,.2),inset 0 1px 0 rgba(255,255,255,.26);
+  transition:transform .25s ease,box-shadow .25s ease,filter .25s ease;
+}
+.session-verification-error__retry button:hover:not(:disabled) {transform:translateY(-2px);filter:brightness(1.06);box-shadow:0 17px 34px rgba(0,119,255,.27),0 0 25px rgba(0,224,255,.16),inset 0 1px 0 rgba(255,255,255,.3);}
+.session-verification-error__retry button:active:not(:disabled) {transform:translateY(0) scale(.99);}
+.session-verification-error__retry button:focus-visible {outline:2px solid var(--accent-cyan,#00e0ff);outline-offset:4px;}
+.session-verification-error__retry button:disabled {opacity:.6;cursor:wait;transform:none;box-shadow:none;}
+.session-verification-error__note {display:flex;justify-content:center;align-items:flex-start;gap:8px;max-width:40ch;margin:20px auto 0;font-size:.75rem;line-height:1.7;color:var(--text-secondary,#a0b3d0);text-wrap:pretty;}
+.session-verification-error__note svg {flex-shrink:0;margin-top:3px;}
+.session-verification-error__footer {display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:22px;color:var(--text-secondary,#a0b3d0);font-size:.72rem;line-height:1.6;text-align:center;}
+@keyframes session-verification-spin {to{transform:rotate(360deg);}}
+@keyframes session-verification-entry {from{opacity:0;transform:translateY(18px) scale(.985);}to{opacity:1;transform:none;}}
+@keyframes session-verification-glow {from{opacity:.45;transform:translateX(-50%) scale(.94);}to{opacity:.7;transform:translate(-50%,12px) scale(1.04);}}
+@media(max-width:480px) {
+  .session-verification-error__brand {margin-bottom:24px;}
+  .session-verification-error__card {border-radius:19px;padding:26px 20px;}
+  .session-verification-error__message {font-size:.8rem;}
+  .session-verification-error__retry button {font-size:.95rem;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .session-verification-error__content,.session-verification-error__glow,.session-verification-error__symbol svg {animation:none;}
+  .session-verification-error__retry button {transition:none;}
+}

@@ -1,4 +1,6 @@
 """Explicit per-application/worker composition; no public app registration."""
+from app.persistence.admin_resumption_repository import AdminResumptionRepository
+from app.services.admin_resumption_service import AdminResumptionService
 from app.persistence.admin_suspension_repository import AdminSuspensionRepository
 from app.services.admin_suspension_service import AdminSuspensionService
 from dataclasses import dataclass, field
@@ -76,7 +78,8 @@ def compose_admin_http(*, firestore_client, admission_config, security_config,
         router.include_router(create_admin_customers_router(session_service=session_service,
             customers_service=customers_service, security_config=security_config,
             activation_service=AdminActivationService(AdminActivationRepository(firestore_client,clock=clock)),
-            suspension_service=AdminSuspensionService(AdminSuspensionRepository(firestore_client,clock=clock))))
+            suspension_service=AdminSuspensionService(AdminSuspensionRepository(firestore_client,clock=clock)),
+            resumption_service=AdminResumptionService(AdminResumptionRepository(firestore_client,clock=clock))))
         return AdminHTTPComposition(router, session_service, admission_service, login_service)
     except Exception:
         raise AdminCompositionError() from None

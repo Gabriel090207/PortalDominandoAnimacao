@@ -1,3 +1,4 @@
+from app.domain.models import PortalEntitlement
 import unittest
 from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
@@ -22,7 +23,7 @@ class FoundationTests(unittest.TestCase):
     def test_access(self):
         now=datetime(2026,1,1,tzinfo=timezone.utc)
         user=UserAccessState(account_status=AccountStatus.ENABLED,activation_status=ActivationStatus.ACTIVE)
-        right=Entitlement(user_id='u',resource_key=ResourceKey.PORTAL,status=EntitlementStatus.GRANTED,valid_from=now,valid_until=now+timedelta(days=30))
+        right=PortalEntitlement(purchase_id='synthetic-purchase',subscription_id='synthetic-subscription',subscription_status='active',user_id='u',resource_key=ResourceKey.PORTAL,status=EntitlementStatus.GRANTED,valid_from=now,valid_until=now+timedelta(days=30))
         def access(rights, instant=now, state=user):
             return can_access_portal('u',state,rights,now=instant)
         self.assertTrue(access([right]))

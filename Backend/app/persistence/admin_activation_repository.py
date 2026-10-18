@@ -2,18 +2,14 @@
 from datetime import datetime,timezone
 from uuid import uuid4
 from google.cloud import firestore
-from google.cloud.firestore_v1.base_query import FieldFilter
 from app.domain.admin import Admin,AdminPermission,is_admin_enabled,role_has_permission
 from app.domain.admin_activation import (CustomerActivationAudit,CustomerActivationResult,
     CustomerActivationConflict,CustomerActivationUnavailable)
 from app.domain.admin_customers import customer_identifier
-from app.domain.models import Entitlement,UserAccessState
-from app.domain.states import AccountStatus,ActivationStatus,CommercialStatus,ResourceKey
+from app.domain.states import AccountStatus,ActivationStatus
 from app.persistence.collections import CollectionName as C
 from app.persistence.admin_customers_repository import _project_customer
-from app.persistence.kirvano_commerce_repository import _validate_stored
-from app.services.access_service import can_access_portal
-from app.services.kirvano_event_service import digest
+from app.persistence.admin_access_eligibility import has_eligible_portal_access
 
 
 # Local native SDK budget: at most eight commit attempts, no outer retry layer.
@@ -60,28 +56,7 @@ class AdminActivationRepository:
         if customer.activation_status==ActivationStatus.ACTIVE:
             return CustomerActivationResult(customer_id=identifier,result='already_active')
         if customer.activation_status!=ActivationStatus.PENDING:raise CustomerActivationConflict()
-        query=self.client.collection(C.PURCHASES.value)
-        for field,op,value in [('user_id','==',identifier),('status','==',CommercialStatus.ACTIVE.value),
-            ('valid_from','<=',now),('valid_until','>',now)]:
-            query=query.where(filter=FieldFilter(field,op,value))
-        rows=list(query.limit(1).stream(transaction=transaction,timeout=10))
-        if not rows:raise CustomerActivationConflict()
-        if len(rows)!=1:raise ValueError
-        purchase=rows[0].to_dict();_validate_stored(C.PURCHASES,purchase)
-        if purchase['user_id']!=identifier or purchase['status']!=CommercialStatus.ACTIVE.value:
-            raise ValueError
-        entitlement_id=digest(['kirvano-entitlement',1,rows[0].id,ResourceKey.PORTAL.value])
-        right_snapshot=self.client.collection(C.ENTITLEMENTS.value).document(entitlement_id).get(transaction=transaction,timeout=10)
-        right=right_snapshot.to_dict() if right_snapshot.exists else None
-        if right is None:raise CustomerActivationConflict()
-        _validate_stored(C.ENTITLEMENTS,right)
-        if (right['user_id']!=identifier or right['purchase_id']!=rows[0].id or
-            right['valid_from']!=purchase['valid_from'] or right['valid_until']!=purchase['valid_until']):
-            raise CustomerActivationConflict()
-        entitlement=Entitlement(**{key:right[key] for key in ('user_id','resource_key','status','valid_from','valid_until')})
-        # Evaluate the existing access rule with only the proposed activation changed.
-        if not can_access_portal(identifier,UserAccessState(account_status=customer.account_status,
-            activation_status=ActivationStatus.ACTIVE),[entitlement],now=now):
+        if not has_eligible_portal_access(transaction,self.client,identifier,customer.account_status,now):
             raise CustomerActivationConflict()
         record=CustomerActivationAudit(admin_id=administrator.admin_id,customer_id=identifier,occurred_at=now)
         transaction.update(user_ref,{'activation_status':ActivationStatus.ACTIVE.value})

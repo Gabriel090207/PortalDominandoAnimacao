@@ -22,6 +22,16 @@ def _reject_json_constant(value: str):
     raise ValueError("Non-standard JSON constant")
 
 
+def _unique_json_object(pairs):
+    """JSON invokes this per object, after decoding property-name escapes."""
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("Duplicate JSON property")
+        result[key] = value
+    return result
+
+
 @router.post("/kirvano")
 async def receive_kirvano(request: Request):
     # Token transport confirmed by a real Kirvano request: security-token.
@@ -48,7 +58,8 @@ async def receive_kirvano(request: Request):
             raise HTTPException(status_code=413, detail="Request body too large")
         body.extend(chunk)
     try:
-        payload = json.loads(body, parse_constant=_reject_json_constant)
+        payload = json.loads(body, parse_constant=_reject_json_constant,
+                             object_pairs_hook=_unique_json_object)
     except (ValueError, UnicodeError, RecursionError):
         raise HTTPException(status_code=400, detail="Invalid JSON") from None
 

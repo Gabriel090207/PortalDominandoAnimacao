@@ -40,7 +40,11 @@ def test_persisted_session_policy_transition_without_migration(emulator_client,m
         assert rejected.status_code==403 and rejected.headers['cache-control']=='no-store'
         missing=http.post('/admin/customers/synthetic/suspend',headers=headers|{'X-Admin-Request':'1'},json={'confirm_suspension':True})
         assert missing.status_code==404 and missing.json()=={'detail':'Customer not found.'}
-        for action in ('resume','block','unblock'):
+        resume_path='/admin/customers/synthetic/resume'
+        assert http.post(resume_path,headers=headers,json={'confirm_resumption':True}).status_code==403
+        missing_resume=http.post(resume_path,headers=headers|{'X-Admin-Request':'1'},json={'confirm_resumption':True})
+        assert missing_resume.status_code==404 and missing_resume.json()=={'detail':'Customer not found.'}
+        for action in ('block','unblock'):
             assert http.post('/admin/customers/synthetic/'+action,headers=headers,json={}).status_code==404
     assert state(emulator_client)==before
     assert 'permissions' not in next(iter(before['admins'].values()))[0]

@@ -157,11 +157,15 @@ def test_concurrent_activation_different_customers_preserves_commerce(emulator_c
     from app.services.kirvano_event_service import digest
     now=prepare(emulator_client);source=records()
     user=source['users/customer-a']|{'email_normalized':'second@example.com'}
-    purchase=source['purchases/purchase-a']|{'user_id':'customer-b','subscription_id':'b'*64}
+    source_subscription=next(value for key,value in source.items() if key.startswith('subscriptions/'))
+    subscription=source_subscription|{'user_id':'customer-b','sale_id':'synthetic-sale-b'}
+    subscription_id=digest(['kirvano-subscription',1,subscription['source_scope'],subscription['sale_id']])
+    purchase=source['purchases/purchase-a']|{'user_id':'customer-b','subscription_id':subscription_id}
     old_right=next(value for key,value in source.items() if key.startswith('entitlements/'))
     right=old_right|{'user_id':'customer-b','purchase_id':'purchase-b'}
     right_id=digest(['kirvano-entitlement',1,'purchase-b','portal'])
     emulator_client.document('users/customer-b').create(user,timeout=5)
+    emulator_client.document('subscriptions/'+subscription_id).create(subscription,timeout=5)
     emulator_client.document('purchases/purchase-b').create(purchase,timeout=5)
     emulator_client.document('entitlements/'+right_id).create(right,timeout=5)
     before=state(emulator_client);barrier=Barrier(2)
