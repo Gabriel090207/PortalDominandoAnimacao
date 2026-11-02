@@ -91,8 +91,12 @@ class CommercialTests(unittest.TestCase):
             data['customer'].update(name='SYNTHETIC_PRIVATE_NAME',phone='SYNTHETIC_PRIVATE_PHONE')
             data['security-token']='SYNTHETIC_SECRET';data['extra']='SYNTHETIC_PRIVATE_EXTRA'
             result=classify(data)
-            self.assertEqual(result,expected)
-            self.assertNotIn('SYNTHETIC_',str(asdict(result)))
+            # Optional name is now retained only as private delivery metadata;
+            # it still never enters inbox fingerprints, repr or commercial IDs.
+            self.assertEqual(result.candidate.customer_name,'SYNTHETIC_PRIVATE_NAME')
+            from dataclasses import replace
+            self.assertEqual(replace(result,candidate=replace(result.candidate,customer_name=None)),expected)
+            self.assertNotIn('SYNTHETIC_',repr(result))
             self.assertEqual(normalize_event(data),fingerprint)
             printer.assert_not_called()
 

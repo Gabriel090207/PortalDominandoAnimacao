@@ -4,7 +4,9 @@ import type { FormEvent } from 'react'
 import { getAdminSession, loginAdmin } from '../../services/adminApi'
 import { createLoginController } from './loginController'
 import type { LoginState, LoginServices } from './loginController'
+import '../../components/SessionVerificationError/SessionVerificationError.css'
 import './Login.css'
+import AdminLoading from '../../components/AdminLoading/AdminLoading'
 
 const defaultServices: LoginServices = { login: loginAdmin, getSession: getAdminSession }
 
@@ -27,23 +29,27 @@ export default function Login({services = defaultServices}: {services?: LoginSer
     await controller.current!.submit(credentials)
   }
 
-  return <div className="login-shell">
+  if (pending) return <AdminLoading message={state.phase === 'checking' ? 'Confirmando sua sessão…' : 'Verificando suas credenciais…'}/>
+
+  return <div className="login-shell admin-login">
+    <div className="session-verification-error__background" aria-hidden="true">
+      <span className="session-verification-error__glow"/>
+      <span className="session-verification-error__grid"/>
+    </div>
     <main className="login-layout">
+      <header className="session-verification-error__brand admin-login__brand"><span>Dominando <strong>Animação</strong></span><p>Área administrativa</p></header>
       <section className="login-card" aria-labelledby="login-title" aria-busy={pending}>
-        <header className="brand"><span className="brand-name">Dominando<span>Animação</span></span></header>
-        <p className="card-eyebrow">ACESSO ADMINISTRATIVO</p>
         <h1 id="login-title">{confirmed ? 'Acesso confirmado' : unconfirmed ? 'Confirme sua sessão' : 'Bem-vindo de volta'}</h1>
         <p className="card-description">{confirmed ? 'Sua sessão foi validada pelo servidor.' : unconfirmed ? 'Não é necessário enviar sua senha novamente.' : 'Entre com seu e-mail e senha para continuar.'}</p>
         <div className="feedback-region" aria-live="polite" aria-atomic="true">
           {state.message && <p id="login-feedback" className={`feedback ${unconfirmed ? 'feedback-notice' : ''}`} role="alert">{state.message}</p>}
-          {pending && <span className="sr-only">{state.phase === 'checking' ? 'Confirmando sua sessão.' : 'Verificando suas credenciais.'}</span>}
         </div>
         {confirmed ? <div className="success-panel" role="status"><FiCheck className="success-check" aria-hidden="true"/><p>Sessão administrativa confirmada.</p><p className="success-email">{state.session?.email}</p><p>O painel será disponibilizado em uma próxima etapa.</p></div>
           : unconfirmed ? <button className="submit-button" type="button" onClick={() => void controller.current!.retrySession()}>Consultar sessão novamente <FiArrowRight aria-hidden="true"/></button>
           : <form onSubmit={submit} noValidate>
             <div className="field"><label htmlFor="admin-email">E-mail administrativo</label><div className="input-wrap"><FiMail className="input-icon" aria-hidden="true"/><input id="admin-email" name="email" type="email" inputMode="email" autoComplete="username" autoCapitalize="none" spellCheck={false} value={email} onChange={event => setEmail(event.target.value)} disabled={pending} aria-describedby={state.message ? 'login-feedback' : 'login-help'} placeholder="Seu e-mail"/></div></div>
             <div className="field"><label htmlFor="admin-password">Senha</label><div className="input-wrap password-field"><FiLock className="input-icon" aria-hidden="true"/><input id="admin-password" name="password" type={visible ? 'text' : 'password'} autoComplete="current-password" aria-describedby={state.message ? 'login-feedback' : undefined} value={password} onChange={event => setPassword(event.target.value)} disabled={pending} placeholder="Sua senha"/><button type="button" className="visibility-button" onClick={() => setVisible(value => !value)} disabled={pending} aria-label={visible ? 'Ocultar senha' : 'Mostrar senha'} aria-pressed={visible} aria-controls="admin-password">{visible ? <FiEyeOff aria-hidden="true"/> : <FiEye aria-hidden="true"/>}</button></div></div>
-            <button className="submit-button" type="submit" disabled={pending}>{pending ? <><span className="spinner" aria-hidden="true"/>{state.phase === 'checking' ? 'Confirmando sessão…' : 'Entrando…'}</> : <>Entrar no Admin <FiArrowRight aria-hidden="true"/></>}</button>
+            <button className="submit-button" type="submit" disabled={pending}>Entrar no Admin <FiArrowRight aria-hidden="true"/></button>
             <p id="login-help" className="form-help">Use somente as credenciais fornecidas para administrar o portal.</p>
           </form>}
         <div className="card-footer"><FiLock aria-hidden="true"/><span>Sua senha não é armazenada neste navegador.</span></div>

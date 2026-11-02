@@ -7,7 +7,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
+from app.services.purchase_welcome_trigger import schedule_purchase_welcome
 from starlette.concurrency import run_in_threadpool
 
 from app.services.kirvano_commerce_service import receive_commercial_event as register_event
@@ -33,7 +34,7 @@ def _unique_json_object(pairs):
 
 
 @router.post("/kirvano")
-async def receive_kirvano(request: Request):
+async def receive_kirvano(request: Request, background_tasks: BackgroundTasks):
     # Token transport confirmed by a real Kirvano request: security-token.
     # Commercial effects require the separate validated SALE_APPROVED contract.
     load_dotenv(_BACKEND_ROOT / ".env", override=False)
@@ -68,4 +69,5 @@ async def receive_kirvano(request: Request):
     except Exception:
         raise HTTPException(status_code=503, detail="Service unavailable") from None
     logger.info("Kirvano webhook stored: body_bytes=%d logical_id=%s processing_status=%s outcome=%s", len(body), result.logical_id, result.processing_status.value, result.outcome)
+    schedule_purchase_welcome(request, background_tasks, payload, result)
     return {"received": True}

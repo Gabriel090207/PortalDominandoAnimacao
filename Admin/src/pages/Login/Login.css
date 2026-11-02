@@ -129,3 +129,83 @@ button:focus-visible, input:focus-visible {
 .session-details { margin: 0 0 24px; font-size: 13px; line-height: 1.7; }
 .session-details dt { color: var(--text-secondary); margin-top: 12px; }
 .session-details dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+
+/* Login-only composition; shared backdrop/brand come from the approved session screen. */
+.admin-login {
+  position: relative;
+  isolation: isolate;
+  padding: clamp(24px, 6vw, 64px) clamp(16px, 4vw, 32px);
+  background: radial-gradient(ellipse at 50% 8%, rgba(0,224,255,.08), transparent 45%),
+    radial-gradient(ellipse at 50% 100%, rgba(0,80,255,.05), transparent 55%), var(--bg-color);
+}
+.admin-login .login-layout {
+  max-width: 440px;
+  animation: session-verification-entry .65s ease both;
+}
+.admin-login__brand { min-width: 0; color: var(--text-primary); }
+.admin-login__brand > span { overflow-wrap: anywhere; }
+.admin-login .login-card {
+  padding: 28px;
+  border: 1px solid rgba(160,179,208,.16);
+  border-radius: 22px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(0,224,255,.045), transparent 50%),
+    linear-gradient(145deg, rgba(20,27,45,.94), rgba(8,13,25,.96));
+  box-shadow: 0 26px 70px rgba(0,0,0,.42), 0 0 0 1px rgba(0,224,255,.025), inset 0 1px 0 rgba(255,255,255,.035);
+}
+.admin-login .login-card h1 {
+  margin: 0 0 12px;
+  color: #fff;
+  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  font-weight: 650;
+  letter-spacing: -.04em;
+  line-height: 1.2;
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+.admin-login .card-description {
+  margin: 0 auto 22px;
+  max-width: 40ch;
+  font-size: .8rem;
+  line-height: 1.65;
+  text-wrap: balance;
+}
+.admin-login .field { margin-bottom: 16px; }
+.admin-login .field label { margin-bottom: 7px; font-size: .8rem; }
+.admin-login .field input { border-radius: 11px; transition: border-color .2s ease, box-shadow .2s ease; }
+.admin-login .field input:focus { box-shadow: 0 0 0 3px rgba(0,224,255,.08); }
+.admin-login .visibility-button { border-radius: 8px; }
+.admin-login .submit-button {
+  min-height: 52px;
+  padding: 14px 18px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 13px;
+  font-size: 1rem;
+  font-weight: 750;
+  color: #001317;
+  background: linear-gradient(135deg, rgba(0,224,255,.94), rgba(0,151,255,.96));
+  box-shadow: 0 13px 28px rgba(0,119,255,.2), inset 0 1px 0 rgba(255,255,255,.26);
+  transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
+}
+.admin-login .submit-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+  box-shadow: 0 17px 34px rgba(0,119,255,.27), 0 0 25px rgba(0,224,255,.16), inset 0 1px 0 rgba(255,255,255,.3);
+}
+.admin-login .submit-button:active:not(:disabled) { transform: translateY(0) scale(.99); }
+.admin-login .submit-button:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 4px; }
+.admin-login .submit-button:disabled { opacity: .6; cursor: wait; transform: none; filter: none; box-shadow: none; }
+.admin-login .form-help { margin-top: 14px; font-size: .72rem; text-wrap: pretty; }
+.admin-login .card-footer { margin-top: 18px; padding-top: 16px; font-size: .72rem; text-align: center; align-items: flex-start; }
+.admin-login .card-footer svg { margin-top: 3px; }
+@media (max-width: 480px) {
+  .admin-login .login-card { border-radius: 19px; padding: 24px 20px; }
+  .admin-login .submit-button { font-size: .95rem; }
+}
+@media (max-height: 650px) {
+  .admin-login { padding-block: 20px; }
+  .admin-login__brand { margin-bottom: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-login .login-layout { animation: none; }
+  .admin-login .field input, .admin-login .submit-button { transition: none; }
+}

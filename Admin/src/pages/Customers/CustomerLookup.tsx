@@ -1,4 +1,5 @@
 import {useEffect,useState,useSyncExternalStore} from 'react'
+import {FiSearch} from 'react-icons/fi'
 import type {SessionState,SessionStore} from '../../session/sessionStore'
 import {createCustomerLookupStore} from './customerLookupStore'
 import type {CustomerLookupStore} from './customerLookupStore'
@@ -14,7 +15,7 @@ export function CustomerLookupForm({lookup,disabled=false}:{lookup:CustomerLooku
       <div className="customer-search-field"><label htmlFor="customer-search-email">E-mail utilizado na compra</label>
         <input id="customer-search-email" type="email" autoComplete="off" spellCheck={false} value={state.email} disabled={disabled}
           onChange={event=>lookup.edit(event.target.value)}/></div>
-      <div className="customer-search-actions"><button type="submit" className="secondary-button" disabled={disabled||loading||!state.email.trim()}>{loading?'Pesquisando…':'Pesquisar'}</button>
+      <div className="customer-search-actions"><button type="submit" className="secondary-button customer-icon-button" disabled={disabled||loading||!state.email.trim()}><FiSearch aria-hidden="true" focusable="false"/>{loading?'Pesquisando…':'Pesquisar'}</button>
         {(state.email||state.status!=='idle')&&<button type="button" className="secondary-button" disabled={disabled} onClick={()=>lookup.clear()}>Limpar</button>}</div>
     </form>
     {loading&&<p role="status" aria-live="polite">Pesquisando cliente…</p>}

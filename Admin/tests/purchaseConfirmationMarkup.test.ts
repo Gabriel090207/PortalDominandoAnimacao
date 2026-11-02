@@ -16,6 +16,8 @@ test('purchase presentation is access-management information, no financial indic
    const render=()=>renderToStaticMarkup(createElement(PurchaseConfirmationView,{confirmationStore:store}))
    assert.match(render(),/Consultando confirmação/);await store.load('synthetic')
    const markup=render();assert.match(markup,approved?/Sim/:/Não encontrada/)
+   assert.match(markup,/Registro histórico de aprovação/)
+   assert.match(markup,/Validade atual não verificada/)
    assert.match(markup,/Em caso de dúvida, confira a compra diretamente na Kirvano/)
    for(const forbidden of ['current_payment_validity','not_verified','R$','Ativar acesso','nunca pagou','pagamento válido'])assert.ok(!markup.includes(forbidden))
   }

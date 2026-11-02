@@ -1,4 +1,5 @@
 import {useEffect,useRef,useSyncExternalStore} from 'react'
+import {FiCheckCircle,FiPauseCircle,FiRefreshCw} from 'react-icons/fi'
 import type {CustomerAccessStore} from './customerAccessStore'
 export interface CustomerAccessText {
   label:string;trigger:string;legend:string;description:string;note:string;consent:string;confirm:string;submitting:string
@@ -16,15 +17,15 @@ export default function CustomerAccessAction({action,email,available,text,restri
   if(state.status==='idle'&&!available&&!state.message)return null
   return <section className={`customer-activation${restriction?' customer-suspension':''}`} aria-label={text.label} aria-busy={state.status==='submitting'||state.status==='refreshing'}>
     {state.message&&<p ref={feedback} tabIndex={-1} role={state.status==='error'||state.status==='uncertain'?'alert':'status'}>{state.message}</p>}
-    {(state.status==='idle'||state.status==='confirmed')&&available&&action.canOpen()&&<button ref={trigger} type="button" className="secondary-button" onClick={()=>action.open()}>{text.trigger}</button>}
+    {(state.status==='idle'||state.status==='confirmed')&&available&&action.canOpen()&&<button ref={trigger} type="button" className="secondary-button customer-action-button" onClick={()=>action.open()}>{restriction?<FiPauseCircle aria-hidden="true"/>:<FiCheckCircle aria-hidden="true"/>}{text.trigger}</button>}
     {state.status==='confirming'&&<form onSubmit={event=>{event.preventDefault();void action.submit()}}>
       <fieldset><legend>{text.legend}</legend><p>{text.description}</p><p className="activation-email">{email}</p>
         <p>{text.note}</p>
         <label className="activation-consent"><input ref={checkbox} type="checkbox" checked={state.consent} onChange={event=>action.consent(event.target.checked)}/>{text.consent}</label>
-        <div className="activation-actions"><button type="button" className="secondary-button" onClick={()=>action.cancel()}>Cancelar</button><button type="submit" className="secondary-button" disabled={!state.consent||!available}>{text.confirm}</button></div>
+        <div className="activation-actions"><button type="button" className="secondary-button" onClick={()=>action.cancel()}>Cancelar</button><button type="submit" className="secondary-button customer-action-button" disabled={!state.consent||!available}>{restriction?<FiPauseCircle aria-hidden="true"/>:<FiCheckCircle aria-hidden="true"/>}{text.confirm}</button></div>
       </fieldset></form>}
     {state.status==='submitting'&&<p role="status">{text.submitting}</p>}
     {state.status==='refreshing'&&<p role="status">Atualizando situação…</p>}
-    {['error','uncertain','confirmed'].includes(state.status)&&<button type="button" className="secondary-button" onClick={()=>void action.refresh()}>Atualizar situação</button>}
+    {['error','uncertain','confirmed'].includes(state.status)&&<button type="button" className="secondary-button" onClick={()=>void action.refresh()}><FiRefreshCw aria-hidden="true"/>Atualizar situação</button>}
   </section>
 }

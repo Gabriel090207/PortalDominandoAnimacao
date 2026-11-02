@@ -46,6 +46,7 @@ class CommercialCandidate:
     purchase_id: str
     schema_version: int = COMMERCIAL_SCHEMA_VERSION
     identity_version: int = COMMERCIAL_IDENTITY_VERSION
+    customer_name: str | None = field(default=None, repr=False)
 
 
 @dataclass(frozen=True)

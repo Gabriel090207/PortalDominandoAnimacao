@@ -1,0 +1,6 @@
+.customer-status {display:inline-flex;align-items:center;gap:7px;max-width:100%;padding:6px 10px;border-radius:9px;font-size:.75rem;font-weight:600;line-height:1.5;overflow-wrap:anywhere;vertical-align:middle;}
+.customer-status svg {width:14px;height:14px;flex-shrink:0;}
+.customer-status--positive {background:rgba(34,197,94,.12);color:#86efac;}
+.customer-status--warning {background:rgba(250,204,21,.12);color:#fde68a;}
+.customer-status--negative {background:rgba(239,68,68,.12);color:#fca5a5;}
+.customer-status--neutral {background:rgba(160,179,208,.12);color:#b8c7dd;}

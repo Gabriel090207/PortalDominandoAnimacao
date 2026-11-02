@@ -16,7 +16,7 @@ from app.persistence.admin_customers_repository import AdminCustomersRepository
 from app.services.admin_customers_service import AdminCustomersService
 from app.config.admin_admission import AdminAdmissionConfig
 from app.config.admin_http_security import AdminRequestSecurityConfig
-from app.domain.admin_admission import AdminAdmissionPolicy
+from app.domain.admin_admission import validate_admission_policy
 from app.domain.policies import INITIAL_ADMIN_ADMISSION_POLICY
 from app.persistence.admin_repository import AdminRepository
 from app.persistence.admin_sessions_repository import AdminSessionsRepository
@@ -64,7 +64,7 @@ def compose_admin_http(*, firestore_client, admission_config, security_config,
             raise ValueError
         admission_config = AdminAdmissionConfig(admission_config.secret, admission_config.key_version)
         security_config = AdminRequestSecurityConfig(security_config.allowed_origins)
-        policy = AdminAdmissionPolicy.model_validate(policy.model_dump())
+        policy = validate_admission_policy(policy)
         session_service = AdminSessionService(AdminSessionsRepository(firestore_client))
         admission_service = AdminAdmissionService(AdminAdmissionRepository(firestore_client),
             policy=policy, admission_hmac_secret=admission_config.secret.get_secret_value(),

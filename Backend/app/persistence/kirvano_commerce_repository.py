@@ -13,6 +13,7 @@ from app.persistence.collections import CollectionName as C
 from app.persistence.kirvano_events_repository import prepare_receipt
 from app.services.kirvano_event_service import digest
 from app.services.firebase_service import get_firestore_client
+from app.domain.welcome_email import welcome_intent_id
 
 _MAX_TRANSACTION_EXECUTIONS = 3
 
@@ -319,13 +320,30 @@ def commercial_transaction(transaction, client, event, commercial, identity, can
         return finish('unproven_existing_purchase')
     if subscription is not None and subscription['status'] != CommercialStatus.ACTIVE.value:
         return finish('subscription_not_active')
+    # Only a NEW eligible SALE_APPROVED creates an intent. Reads still precede
+    # every buffered write. Historical purchases/retries never backfill mail.
+    welcome_ref = None
+    if event.normalized_payload.get('event') == 'SALE_APPROVED':
+        welcome_ref = _document(client, C.TRANSACTIONAL_EMAILS, welcome_intent_id(candidate.purchase_id))
+        if _read(welcome_ref, transaction) is not None:
+            raise RuntimeError('Inconsistent post-purchase intent.')
     if user is None:
-        plan.create(user_ref, {'schema_version':1,'email_normalized':candidate.email_normalized,'email_normalization_version':1,
-                               'account_status':AccountStatus.ENABLED.value,'activation_status':ActivationStatus.PENDING.value,'created_at':timestamp})
+        user_data = {'schema_version':1,'email_normalized':candidate.email_normalized,'email_normalization_version':1,
+                     'account_status':AccountStatus.ENABLED.value,'activation_status':ActivationStatus.PENDING.value,'created_at':timestamp}
+        if not renewal and candidate.customer_name is not None:
+            user_data['display_name'] = candidate.customer_name
+        plan.create(user_ref, user_data)
         plan.create(identity_ref, {'schema_version':1,'normalization_version':1,'identity_version':1,'hmac_key_version':1,'user_id':user_id,'created_at':timestamp})
+    elif not renewal and candidate.customer_name is not None and 'display_name' not in user:
+        plan.update(user_ref, {'display_name': candidate.customer_name})
     if subscription is None:
         plan.create(subscription_ref, sub_data)
     plan.create(purchase_ref, purchase_data)
     plan.create(entitlement_ref, entitlement_data)
+    if welcome_ref is not None:
+        plan.create(welcome_ref, {'schema_version':1,'kind':'purchase_welcome','template_version':1,
+            'status':'pending','purchase_id':candidate.purchase_id,'user_id':user_id,
+            'origin_event_id':event.logical_id,'recipient':candidate.email_normalized,
+            'customer_name':candidate.customer_name,'created_at':timestamp})
     plan.update(root, {'application': {**expected_application,'processed_at':timestamp}})
     return finish()

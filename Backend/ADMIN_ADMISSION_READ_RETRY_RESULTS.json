@@ -1,0 +1,679 @@
+{
+  "isolated_original_repetitions": [
+    {
+      "run": 1,
+      "exit_status": 0,
+      "diagnostics": [
+        {
+          "operations": [
+            {
+              "counts": {
+                "begin": 2,
+                "buffer_create": 8,
+                "commit": 2,
+                "read": 8
+              },
+              "errors": [
+                {
+                  "stage": "commit",
+                  "types": [
+                    "Aborted",
+                    "_InactiveRpcError"
+                  ]
+                }
+              ],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            },
+            {
+              "counts": {
+                "begin": 3,
+                "buffer_create": 10,
+                "buffer_update": 2,
+                "commit": 3,
+                "read": 12
+              },
+              "errors": [
+                {
+                  "stage": "commit",
+                  "types": [
+                    "Aborted",
+                    "_InactiveRpcError"
+                  ]
+                },
+                {
+                  "stage": "commit",
+                  "types": [
+                    "Aborted",
+                    "_InactiveRpcError"
+                  ]
+                }
+              ],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            }
+          ],
+          "persisted_scopes": {
+            "aggregate": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            },
+            "origin": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "origin_identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            }
+          },
+          "seconds": 4.045,
+          "test": "test_two_administrators_simultaneously_share_aggregate"
+        }
+      ]
+    },
+    {
+      "run": 2,
+      "exit_status": 0,
+      "diagnostics": [
+        {
+          "operations": [
+            {
+              "counts": {
+                "begin": 2,
+                "buffer_create": 6,
+                "buffer_update": 2,
+                "commit": 2,
+                "read": 8
+              },
+              "errors": [
+                {
+                  "stage": "commit",
+                  "types": [
+                    "Aborted",
+                    "_InactiveRpcError"
+                  ]
+                }
+              ],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            },
+            {
+              "counts": {
+                "begin": 1,
+                "buffer_create": 4,
+                "commit": 1,
+                "read": 4
+              },
+              "errors": [],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            }
+          ],
+          "persisted_scopes": {
+            "aggregate": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            },
+            "origin": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "origin_identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            }
+          },
+          "seconds": 2.034,
+          "test": "test_two_administrators_simultaneously_share_aggregate"
+        }
+      ]
+    },
+    {
+      "run": 3,
+      "exit_status": 0,
+      "diagnostics": [
+        {
+          "operations": [
+            {
+              "counts": {
+                "begin": 1,
+                "buffer_create": 4,
+                "commit": 1,
+                "read": 4
+              },
+              "errors": [],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            },
+            {
+              "counts": {
+                "begin": 2,
+                "buffer_create": 6,
+                "buffer_update": 2,
+                "commit": 2,
+                "read": 8
+              },
+              "errors": [
+                {
+                  "stage": "commit",
+                  "types": [
+                    "Aborted",
+                    "_InactiveRpcError"
+                  ]
+                }
+              ],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            }
+          ],
+          "persisted_scopes": {
+            "aggregate": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            },
+            "origin": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "origin_identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            }
+          },
+          "seconds": 2.033,
+          "test": "test_two_administrators_simultaneously_share_aggregate"
+        }
+      ]
+    },
+    {
+      "run": 4,
+      "exit_status": 0,
+      "diagnostics": [
+        {
+          "operations": [
+            {
+              "counts": {
+                "begin": 1,
+                "buffer_create": 4,
+                "commit": 1,
+                "read": 4
+              },
+              "errors": [],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            },
+            {
+              "counts": {
+                "begin": 2,
+                "buffer_create": 6,
+                "buffer_update": 2,
+                "commit": 2,
+                "read": 8
+              },
+              "errors": [
+                {
+                  "stage": "commit",
+                  "types": [
+                    "Aborted",
+                    "_InactiveRpcError"
+                  ]
+                }
+              ],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            }
+          ],
+          "persisted_scopes": {
+            "aggregate": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            },
+            "origin": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "origin_identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            }
+          },
+          "seconds": 2.032,
+          "test": "test_two_administrators_simultaneously_share_aggregate"
+        }
+      ]
+    },
+    {
+      "run": 5,
+      "exit_status": 0,
+      "diagnostics": [
+        {
+          "operations": [
+            {
+              "counts": {
+                "begin": 1,
+                "buffer_create": 4,
+                "commit": 1,
+                "read": 4
+              },
+              "errors": [],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            },
+            {
+              "counts": {
+                "begin": 2,
+                "buffer_create": 6,
+                "buffer_update": 2,
+                "commit": 2,
+                "read": 8
+              },
+              "errors": [
+                {
+                  "stage": "commit",
+                  "types": [
+                    "Aborted",
+                    "_InactiveRpcError"
+                  ]
+                }
+              ],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            }
+          ],
+          "persisted_scopes": {
+            "aggregate": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            },
+            "origin": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "origin_identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            }
+          },
+          "seconds": 2.033,
+          "test": "test_two_administrators_simultaneously_share_aggregate"
+        }
+      ]
+    },
+    {
+      "run": 6,
+      "exit_status": 0,
+      "diagnostics": [
+        {
+          "operations": [
+            {
+              "counts": {
+                "begin": 2,
+                "buffer_create": 8,
+                "commit": 2,
+                "read": 8
+              },
+              "errors": [
+                {
+                  "stage": "commit",
+                  "types": [
+                    "Aborted",
+                    "_InactiveRpcError"
+                  ]
+                }
+              ],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            },
+            {
+              "counts": {
+                "begin": 3,
+                "buffer_create": 10,
+                "buffer_update": 2,
+                "commit": 3,
+                "read": 12
+              },
+              "errors": [
+                {
+                  "stage": "commit",
+                  "types": [
+                    "Aborted",
+                    "_InactiveRpcError"
+                  ]
+                },
+                {
+                  "stage": "commit",
+                  "types": [
+                    "Aborted",
+                    "_InactiveRpcError"
+                  ]
+                }
+              ],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            }
+          ],
+          "persisted_scopes": {
+            "aggregate": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            },
+            "origin": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "origin_identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            }
+          },
+          "seconds": 4.041,
+          "test": "test_two_administrators_simultaneously_share_aggregate"
+        }
+      ]
+    },
+    {
+      "run": 7,
+      "exit_status": 0,
+      "diagnostics": [
+        {
+          "operations": [
+            {
+              "counts": {
+                "begin": 2,
+                "buffer_create": 6,
+                "buffer_update": 2,
+                "commit": 2,
+                "read": 8
+              },
+              "errors": [
+                {
+                  "stage": "commit",
+                  "types": [
+                    "Aborted",
+                    "_InactiveRpcError"
+                  ]
+                }
+              ],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            },
+            {
+              "counts": {
+                "begin": 1,
+                "buffer_create": 4,
+                "commit": 1,
+                "read": 4
+              },
+              "errors": [],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            }
+          ],
+          "persisted_scopes": {
+            "aggregate": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            },
+            "origin": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "origin_identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            }
+          },
+          "seconds": 2.035,
+          "test": "test_two_administrators_simultaneously_share_aggregate"
+        }
+      ]
+    },
+    {
+      "run": 8,
+      "exit_status": 0,
+      "diagnostics": [
+        {
+          "operations": [
+            {
+              "counts": {
+                "begin": 1,
+                "buffer_create": 4,
+                "commit": 1,
+                "read": 4
+              },
+              "errors": [],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            },
+            {
+              "counts": {
+                "begin": 2,
+                "buffer_create": 6,
+                "buffer_update": 2,
+                "commit": 2,
+                "read": 8
+              },
+              "errors": [
+                {
+                  "stage": "commit",
+                  "types": [
+                    "Aborted",
+                    "_InactiveRpcError"
+                  ]
+                }
+              ],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            }
+          ],
+          "persisted_scopes": {
+            "aggregate": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            },
+            "origin": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "origin_identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            }
+          },
+          "seconds": 2.033,
+          "test": "test_two_administrators_simultaneously_share_aggregate"
+        }
+      ]
+    },
+    {
+      "run": 9,
+      "exit_status": 0,
+      "diagnostics": [
+        {
+          "operations": [
+            {
+              "counts": {
+                "begin": 2,
+                "buffer_create": 8,
+                "commit": 2,
+                "read": 8
+              },
+              "errors": [
+                {
+                  "stage": "commit",
+                  "types": [
+                    "Aborted",
+                    "_InactiveRpcError"
+                  ]
+                }
+              ],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            },
+            {
+              "counts": {
+                "begin": 3,
+                "buffer_create": 10,
+                "buffer_update": 2,
+                "commit": 3,
+                "read": 12
+              },
+              "errors": [
+                {
+                  "stage": "commit",
+                  "types": [
+                    "Aborted",
+                    "_InactiveRpcError"
+                  ]
+                },
+                {
+                  "stage": "commit",
+                  "types": [
+                    "Aborted",
+                    "_InactiveRpcError"
+                  ]
+                }
+              ],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            }
+          ],
+          "persisted_scopes": {
+            "aggregate": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            },
+            "origin": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "origin_identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            }
+          },
+          "seconds": 4.048,
+          "test": "test_two_administrators_simultaneously_share_aggregate"
+        }
+      ]
+    },
+    {
+      "run": 10,
+      "exit_status": 0,
+      "diagnostics": [
+        {
+          "operations": [
+            {
+              "counts": {
+                "begin": 1,
+                "buffer_create": 4,
+                "commit": 1,
+                "read": 4
+              },
+              "errors": [],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            },
+            {
+              "counts": {
+                "begin": 2,
+                "buffer_create": 6,
+                "buffer_update": 2,
+                "commit": 2,
+                "read": 8
+              },
+              "errors": [
+                {
+                  "stage": "commit",
+                  "types": [
+                    "Aborted",
+                    "_InactiveRpcError"
+                  ]
+                }
+              ],
+              "read_after_write": false,
+              "result": "allowed",
+              "stage": "commit"
+            }
+          ],
+          "persisted_scopes": {
+            "aggregate": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            },
+            "origin": {
+              "documents": 1,
+              "total_debit_tokens": 2.0
+            },
+            "origin_identity": {
+              "documents": 2,
+              "total_debit_tokens": 2.0
+            }
+          },
+          "seconds": 2.031,
+          "test": "test_two_administrators_simultaneously_share_aggregate"
+        }
+      ]
+    }
+  ]
+}

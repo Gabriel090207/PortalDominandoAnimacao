@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from app.domain.email import normalize_email
+from app.domain.welcome_email import optional_customer_name
 from app.domain.kirvano_commercial import (
     COMMERCIAL_IDENTITY_VERSION, CancellationCandidate, CommercialCandidate, CommercialClassification,
     CommercialReason as Reason, CommercialResult,
@@ -114,4 +115,5 @@ def classify_commercial_event(payload, *, timezone_name: str | None) -> Commerci
     return CommercialResult(CommercialClassification.ELIGIBLE, (), CommercialCandidate(
         email, sale_id, charge, 'MONTHLY', AUTHORIZED_PRODUCT_ID, AUTHORIZED_OFFER_ID,
         start, end, SOURCE_SCOPE, subscription_id, purchase_id,
+        customer_name=optional_customer_name(customer.get('name')),
     ))

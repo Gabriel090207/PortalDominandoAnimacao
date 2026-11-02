@@ -52,3 +52,110 @@
 .customer-suspension > button { font-weight:600; }
 .customer-suspension button { max-width:100%; white-space:normal; overflow-wrap:anywhere; }
 .customer-suspension legend { max-width:100%; overflow-wrap:anywhere; }
+
+/* The customer home uses the same visual vocabulary as login/session verification. */
+.customers-workspace {
+  position:relative;isolation:isolate;min-height:100vh;min-height:100dvh;
+  background:radial-gradient(ellipse at 50% 8%,rgba(0,224,255,.08),transparent 45%),
+    radial-gradient(ellipse at 50% 100%,rgba(0,80,255,.05),transparent 55%),var(--bg-color,#050913);
+}
+.customers-workspace .customers-page {max-width:1440px;animation:session-verification-entry .45s ease both;}
+.customers-workspace .customer-icon-button {display:inline-flex;align-items:center;justify-content:center;gap:8px;}
+.customers-workspace .customer-icon-button svg {width:18px;height:18px;flex-shrink:0;}
+.customers-workspace .customers-header {align-items:flex-start;margin-bottom:26px;}
+.customers-brand {font-size:clamp(1.2rem,3vw,1.6rem);font-weight:650;letter-spacing:-.045em;overflow-wrap:anywhere;}
+.customers-brand strong {color:var(--accent-cyan);font-weight:750;text-shadow:0 0 20px rgba(0,224,255,.16);}
+.customers-brand span {display:block;margin-top:8px;font-size:.75rem;font-weight:400;letter-spacing:.06em;color:var(--text-secondary);}
+.customers-workspace .customers-header h1 {margin:26px 0 8px;font-size:clamp(1.4rem,3vw,1.8rem);letter-spacing:-.04em;text-wrap:balance;}
+.customers-workspace .customers-header p {font-size:.85rem;text-wrap:pretty;}
+.customers-workspace .customer-search,.customers-workspace .customers-results {
+  min-width:0;padding:24px;border:1px solid rgba(160,179,208,.16);border-radius:20px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(0,224,255,.035),transparent 50%),linear-gradient(145deg,rgba(20,27,45,.94),rgba(8,13,25,.96));
+  box-shadow:0 20px 50px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.035);
+}
+.customers-workspace .customer-search {margin-bottom:20px;}
+.customers-workspace .customer-search h2 {font-size:1rem;margin-bottom:20px;}
+.customers-workspace .customer-search input {min-height:48px;border-radius:11px;background:var(--input-bg);font-size:1rem;transition:border-color .2s ease,box-shadow .2s ease;}
+.customers-workspace .customer-search input:focus {border-color:var(--accent-cyan);box-shadow:0 0 0 3px rgba(0,224,255,.08);}
+.customers-workspace .secondary-button {border-radius:11px;max-width:100%;white-space:normal;overflow-wrap:anywhere;transition:border-color .2s ease,background .2s ease,box-shadow .2s ease;}
+.customers-workspace .customer-search button[type=submit] {
+  min-height:48px;padding:12px 22px;font-size:.95rem;font-weight:750;color:#001317;
+  border:1px solid rgba(255,255,255,.12);border-radius:13px;
+  background:linear-gradient(135deg,rgba(0,224,255,.94),rgba(0,151,255,.96));
+  box-shadow:0 10px 24px rgba(0,119,255,.18),inset 0 1px 0 rgba(255,255,255,.26);
+}
+.customers-workspace .customer-search button[type=submit]:hover:not(:disabled) {filter:brightness(1.06);color:#001317;}
+.customers-workspace .customer-search button[type=submit]:active:not(:disabled) {filter:brightness(.98);}
+.customers-workspace .customer-search button[type=submit]:disabled {box-shadow:none;}
+.customers-workspace .customer-card {border-radius:14px;background:rgba(20,27,45,.6);padding:20px;}
+.customers-workspace .customers-notice {margin:0;padding:24px 12px;border:0;background:transparent;text-align:center;color:var(--text-secondary);font-size:.85rem;}
+.customers-workspace .customers-pagination {padding-top:18px;margin-top:20px;border-top:1px solid rgba(160,179,208,.12);}
+@media(max-width:600px) {
+  .customers-workspace .customers-page {padding:24px 16px;}
+  .customers-workspace .customers-header {flex-wrap:wrap;}
+  .customers-workspace .customer-search,.customers-workspace .customers-results {padding:20px 16px;border-radius:17px;}
+  .customers-workspace .customer-search-field {flex-basis:100%;}
+  .customers-workspace .customer-search-actions {width:100%;}
+  .customers-workspace .customer-search-actions button {flex:1 1 auto;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .customers-workspace .customers-page {animation:none;}
+  .customers-workspace .secondary-button,.customers-workspace .customer-search input {transition:none;}
+}
+
+/* Shared customer cards and semantic actions; no state or access rules here. */
+.customers-page .back-link {
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;max-width:100%;
+  min-height:44px;padding:10px 14px;margin:0 0 12px;border-radius:11px;
+  background:rgba(0,151,255,.12);color:#9aefff;text-decoration:none;
+  line-height:1.5;overflow-wrap:anywhere;transition:background .2s ease,box-shadow .2s ease;
+}
+.customers-page .back-link:hover {background:rgba(0,151,255,.22);box-shadow:0 5px 18px rgba(0,119,255,.1);}
+.customers-page .back-link:active {background:rgba(0,151,255,.16);}
+.customers-page .back-link svg {width:17px;height:17px;flex-shrink:0;}
+.customers-page .secondary-button {
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:linear-gradient(145deg,#1c2940,#141b2d);text-decoration:none;
+  transition:background .2s ease,border-color .2s ease,box-shadow .2s ease;
+}
+.customers-page .secondary-button svg {width:17px;height:17px;flex-shrink:0;}
+.customers-page .secondary-button:hover:not(:disabled) {background:#20304a;box-shadow:0 5px 18px rgba(0,0,0,.15);}
+.customers-page .secondary-button:active:not(:disabled) {box-shadow:none;filter:brightness(.95);}
+.customers-page .secondary-button:focus-visible {outline:2px solid var(--accent-cyan);outline-offset:4px;}
+.customers-page .secondary-button:disabled {opacity:.5;box-shadow:none;}
+.customers-page .customer-card {border-radius:18px;box-shadow:0 12px 30px rgba(0,0,0,.18);}
+.customer-card dl:not(.customer-facts) {display:grid;grid-template-columns:minmax(0,1fr);gap:4px;}
+.customer-card dl:not(.customer-facts) dt {font-size:.73rem;}
+.customer-card dl:not(.customer-facts) dd {margin:0;}
+.customer-facts {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px;}
+.customer-facts > div {min-width:0;padding:16px;background:rgba(5,9,19,.42);border-radius:12px;}
+.customer-facts dt {font-size:.75rem;}
+.customer-facts dd {font-size:.9rem;}
+.customers-page .purchase-confirmation {
+  margin-top:16px;padding:20px;border:0;border-radius:14px;
+  background:rgba(5,9,19,.42);font-size:.85rem;
+}
+.purchase-confirmation strong {display:inline-block;margin-right:8px;}
+.purchase-confirmation .purchase-note {font-size:.78rem;line-height:1.7;}
+.customers-page .customer-activation {
+  border:1px solid rgba(160,179,208,.14);border-radius:18px;
+  background:linear-gradient(145deg,rgba(20,27,45,.94),rgba(8,13,25,.96));
+  box-shadow:0 12px 30px rgba(0,0,0,.18);
+}
+.customers-page .customer-activation fieldset {border:0;background:rgba(5,9,19,.42);border-radius:12px;}
+.customer-activation .customer-action-button {
+  color:#a7f3d0;background:linear-gradient(135deg,rgba(16,100,77,.8),rgba(13,66,61,.9));border-color:rgba(52,211,153,.24);
+}
+.customer-activation .customer-action-button:hover:not(:disabled) {color:#d1fae5;background:#145747;border-color:rgba(52,211,153,.5);}
+.customer-suspension .customer-action-button {color:#fecaca;background:linear-gradient(135deg,rgba(120,38,49,.85),rgba(70,24,40,.95));border-color:rgba(248,113,113,.28);}
+.customer-suspension .customer-action-button:hover:not(:disabled) {color:#fee2e2;background:#742b3c;border-color:rgba(248,113,113,.5);}
+.customers-workspace .customers-pagination {border:0;padding:14px;background:rgba(5,9,19,.3);border-radius:12px;}
+@media(max-width:480px) {
+  .customer-facts > div {padding:14px;}
+  .customers-page .purchase-confirmation {padding:16px;}
+  .activation-actions > button {flex:1 1 auto;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .customers-page .back-link,.customers-page .secondary-button {transition:none;}
+}
+.customers-workspace .customer-search button[type=submit]:hover:not(:disabled) {background:linear-gradient(135deg,rgba(0,224,255,.94),rgba(0,151,255,.96));}

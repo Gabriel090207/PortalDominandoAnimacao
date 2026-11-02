@@ -33,6 +33,26 @@ class AdminAdmissionPolicy(BaseModel):
     origin: BucketPolicy
     origin_identity: BucketPolicy
 
+    @property
+    def bucket_rules(self):
+        return (("origin", self.origin), ("origin_identity", self.origin_identity))
+
+
+class ComplementaryAdminAdmissionPolicy(AdminAdmissionPolicy):
+    """Explicit opt-in; no default or production limits for these budgets."""
+    identity: BucketPolicy
+    aggregate: BucketPolicy
+
+    @property
+    def bucket_rules(self):
+        return super().bucket_rules + (("identity", self.identity), ("aggregate", self.aggregate))
+
+
+def validate_admission_policy(policy):
+    model = (ComplementaryAdminAdmissionPolicy if isinstance(policy, ComplementaryAdminAdmissionPolicy)
+             else AdminAdmissionPolicy)
+    return model.model_validate(policy.model_dump())
+
 
 class AdmissionOutcome(StrEnum):
     ALLOWED = "allowed"
@@ -85,9 +105,10 @@ def read_bucket(document, policy, scope):
 
 
 def evaluate_buckets(documents, policy, now):
-    """Both consume or neither does. Rejects schema/config drift, even if expired."""
-    policies = (policy.origin, policy.origin_identity)
-    scopes = ("origin", "origin_identity")
+    """All configured budgets consume or none. Reject schema/config drift."""
+    scopes, policies = zip(*policy.bucket_rules)
+    if len(documents) != len(policies):
+        raise ValueError("Invalid admission bucket count.")
     stored = [read_bucket(doc, rule, scope) for doc, rule, scope in zip(documents, policies, scopes)]
     logical_now = max([utc_instant(now)]+[utc_instant(doc["updated_at"]) for doc in stored if doc is not None])
     balances = [rule.maximum if doc is None else min(rule.maximum, doc["credits"]+

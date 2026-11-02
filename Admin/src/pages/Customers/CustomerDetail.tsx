@@ -1,11 +1,12 @@
 import {useEffect,useState,useSyncExternalStore} from 'react'
 import {Link,useParams} from 'react-router-dom'
-import {FiArrowLeft} from 'react-icons/fi'
+import {FiArrowLeft,FiLogOut} from 'react-icons/fi'
 import {AdminApiError} from '../../services/adminApi'
 import type {AdminCustomer} from '../../services/adminApi'
 import type {SessionState,SessionStore} from '../../session/sessionStore'
 import {createCustomerDetailStore} from './customerDetailStore'
-import {accountLabel,activationLabel,registrationDate} from './customerDisplay'
+import {registrationDate} from './customerDisplay'
+import CustomerStatus from './CustomerStatus'
 import {PurchaseConfirmationView} from './PurchaseConfirmation'
 import {createPurchaseConfirmationStore} from './purchaseConfirmationStore'
 import {createCustomerActivationStore,canActivateCustomer} from './customerActivationStore'
@@ -19,11 +20,13 @@ import './Customers.css'
 
 type AuthenticatedState=Extract<SessionState,{status:'authenticated'}>
 export function CustomerFacts({customer}:{customer:AdminCustomer}){
-  return <dl className="customer-facts"><dt>E-mail</dt><dd>{customer.email}</dd>
-    <dt>Identificador do cliente</dt><dd>{customer.customer_id}</dd>
-    <dt>Situação da conta</dt><dd>{accountLabel(customer.account_status)}</dd>
-    <dt>Status de ativação</dt><dd>{activationLabel(customer.activation_status)}</dd>
-    <dt>Data de cadastro</dt><dd>{registrationDate(customer.created_at)}</dd></dl>
+  return <dl className="customer-facts">
+    <div><dt>E-mail</dt><dd>{customer.email}</dd></div>
+    <div><dt>Identificador do cliente</dt><dd>{customer.customer_id}</dd></div>
+    <div><dt>Situação da conta</dt><dd><CustomerStatus kind="account" value={customer.account_status}/></dd></div>
+    <div><dt>Status de ativação</dt><dd><CustomerStatus kind="activation" value={customer.activation_status}/></dd></div>
+    <div><dt>Data de cadastro</dt><dd>{registrationDate(customer.created_at)}</dd></div>
+  </dl>
 }
 export default function CustomerDetail({session,store}:{session:AuthenticatedState;store:SessionStore}){
   const {customerId=''}=useParams()
@@ -88,9 +91,9 @@ function CustomerDetailPage({customerId,session,store}:{customerId:string;sessio
   const suspensionAvailable=state.status==='ready'&&canSuspendCustomer(state.customer,session)&&(operation===undefined||suspensionState.status!=='idle')
   const available=(operation===undefined||activationState.status!=='idle')&&state.status==='ready'&&purchase.status==='ready'&&canActivateCustomer(state.customer,purchase.confirmation,session)
   const loading=session.loggingOut||state.status==='idle'||state.status==='loading'
-  return <main className="customers-page">
-    <header className="customers-header"><div><Link to="/clientes" className="back-link"><FiArrowLeft aria-hidden="true"/> Voltar à listagem</Link><h1>Detalhes do cliente</h1><Link to="/painel" className="back-link">Voltar ao painel</Link></div>
-      <button type="button" className="secondary-button" disabled={session.loggingOut} onClick={()=>void store.logout()}>{session.loggingOut?'Encerrando sessão…':'Sair'}</button></header>
+  return <div className="customers-workspace"><div className="session-verification-error__background" aria-hidden="true"><span className="session-verification-error__grid"/></div><main className="customers-page">
+    <header className="customers-header"><div><Link to="/clientes" className="back-link"><FiArrowLeft aria-hidden="true"/> Voltar aos clientes</Link><h1>Detalhes do cliente</h1></div>
+      <button type="button" className="secondary-button customer-icon-button" disabled={session.loggingOut} onClick={()=>void store.logout()}><FiLogOut aria-hidden="true"/>{session.loggingOut?'Encerrando sessão…':'Sair'}</button></header>
     {session.message&&<p className="feedback" role="alert">{session.message}</p>}
     <section className="customer-card" aria-label="Ficha do cliente" aria-busy={loading}>
       {loading?<p role="status">Consultando cliente…</p>:state.status==='ready'&&state.customer?<><CustomerFacts customer={state.customer}/><PurchaseConfirmationView confirmationStore={confirmation}/></>
@@ -99,5 +102,5 @@ function CustomerDetailPage({customerId,session,store}:{customerId:string;sessio
     {!session.loggingOut&&<CustomerResumption resumption={resumption} email={state.customer?.email} available={resumptionAvailable}/>}
     {!session.loggingOut&&<CustomerSuspension suspension={suspension} email={state.customer?.email} available={suspensionAvailable}/>}
     {!session.loggingOut&&<CustomerActivation activation={activation} email={state.customer?.email} available={available}/>}
-  </main>
+  </main></div>
 }

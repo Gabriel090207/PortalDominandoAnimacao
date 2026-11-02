@@ -1,0 +1,2546 @@
+{
+  "isolated_original": {
+    "runs": 20,
+    "passed": 20,
+    "failed": 0,
+    "per_run_transaction_metrics": "not preserved by initial stdout extractor; no values inferred"
+  },
+  "context_runs": [
+    {
+      "tests_passed": 16,
+      "tests_failed": 0
+    },
+    {
+      "tests_passed": 29,
+      "tests_failed": 0
+    }
+  ],
+  "notes": [
+    "Context arrays preserve repeated cases; counts overlap.",
+    "Comparison failures classified as Aborted are operational outcomes with assertions on consistency, not ignored pytest failures.",
+    "Injected read/commit failures are distinguished by their test names."
+  ],
+  "context_evidence": [
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[True-True-True-0]",
+      "seconds": 2.041,
+      "operation_results": {
+        "allowed": 2
+      },
+      "stage_counts": {
+        "begin": 3,
+        "buffer_create": 8,
+        "commit": 3,
+        "read": 12,
+        "buffer_update": 4
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 2,
+            "buffer_create": 4,
+            "buffer_update": 4,
+            "commit": 2,
+            "read": 8
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "identity": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "origin": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "origin_identity": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[True-True-False-0]",
+      "seconds": 0.013,
+      "operation_results": {
+        "allowed": 2
+      },
+      "stage_counts": {
+        "begin": 2,
+        "buffer_create": 4,
+        "commit": 2,
+        "read": 8,
+        "buffer_update": 4
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_update": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "identity": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "origin": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "origin_identity": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[True-False-True-0]",
+      "seconds": 2.031,
+      "operation_results": {
+        "allowed": 2
+      },
+      "stage_counts": {
+        "begin": 3,
+        "buffer_create": 10,
+        "commit": 3,
+        "read": 12,
+        "buffer_update": 2
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 2,
+            "buffer_create": 6,
+            "buffer_update": 2,
+            "commit": 2,
+            "read": 8
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "identity": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "origin": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        },
+        "origin_identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[True-False-False-0]",
+      "seconds": 0.016,
+      "operation_results": {
+        "allowed": 2
+      },
+      "stage_counts": {
+        "begin": 2,
+        "buffer_create": 6,
+        "commit": 2,
+        "read": 8,
+        "buffer_update": 2
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 2,
+            "buffer_update": 2,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "identity": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "origin": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        },
+        "origin_identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[False-True-True-0]",
+      "seconds": 2.022,
+      "operation_results": {
+        "allowed": 2
+      },
+      "stage_counts": {
+        "begin": 3,
+        "buffer_create": 10,
+        "commit": 3,
+        "read": 12,
+        "buffer_update": 2
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 2,
+            "buffer_create": 6,
+            "buffer_update": 2,
+            "commit": 2,
+            "read": 8
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        },
+        "origin": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "origin_identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[False-True-False-0]",
+      "seconds": 0.013,
+      "operation_results": {
+        "allowed": 2
+      },
+      "stage_counts": {
+        "begin": 2,
+        "buffer_create": 6,
+        "commit": 2,
+        "read": 8,
+        "buffer_update": 2
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 2,
+            "buffer_update": 2,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        },
+        "origin": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "origin_identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[False-False-True-0]",
+      "seconds": 4.031,
+      "operation_results": {
+        "allowed": 2
+      },
+      "stage_counts": {
+        "begin": 5,
+        "buffer_create": 19,
+        "commit": 5,
+        "read": 20,
+        "buffer_update": 1
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 2,
+            "buffer_create": 8,
+            "commit": 2,
+            "read": 8
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 3,
+            "buffer_create": 11,
+            "buffer_update": 1,
+            "commit": 3,
+            "read": 12
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            },
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        },
+        "origin": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        },
+        "origin_identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[False-False-False-0]",
+      "seconds": 0.011,
+      "operation_results": {
+        "allowed": 2
+      },
+      "stage_counts": {
+        "begin": 2,
+        "buffer_create": 7,
+        "commit": 2,
+        "read": 8,
+        "buffer_update": 1
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 3,
+            "buffer_update": 1,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        },
+        "origin": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        },
+        "origin_identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[True-True-True-19]",
+      "seconds": 2.116,
+      "operation_results": {
+        "allowed": 20,
+        "error": 1
+      },
+      "stage_counts": {
+        "begin": 22,
+        "buffer_create": 64,
+        "commit": 21,
+        "read": 88,
+        "buffer_update": 20,
+        "rollback": 1
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "read": 4,
+            "rollback": 1
+          },
+          "errors": [
+            {
+              "stage": "read",
+              "types": [
+                "Aborted",
+                "_MultiThreadedRendezvous"
+              ]
+            }
+          ],
+          "exception_types": [
+            "AdminAdmissionUnavailable",
+            "AdminAdmissionUnavailable",
+            "Aborted",
+            "_MultiThreadedRendezvous"
+          ],
+          "read_after_write": false,
+          "result": "error",
+          "stage": "rollback"
+        },
+        {
+          "counts": {
+            "begin": 2,
+            "buffer_create": 6,
+            "buffer_update": 2,
+            "commit": 2,
+            "read": 8
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 20.0
+        },
+        "identity": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        },
+        "origin": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        },
+        "origin_identity": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[True-False-True-19]",
+      "seconds": 2.116,
+      "operation_results": {
+        "allowed": 20,
+        "limited": 1
+      },
+      "stage_counts": {
+        "begin": 22,
+        "buffer_create": 64,
+        "commit": 22,
+        "read": 88,
+        "buffer_update": 20
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 3,
+            "buffer_update": 1,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 2,
+            "buffer_create": 3,
+            "buffer_update": 1,
+            "commit": 2,
+            "read": 8
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "limited",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 20.0
+        },
+        "identity": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        },
+        "origin": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        },
+        "origin_identity": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[False-True-True-19]",
+      "seconds": 2.112,
+      "operation_results": {
+        "allowed": 20,
+        "limited": 1
+      },
+      "stage_counts": {
+        "begin": 22,
+        "buffer_create": 64,
+        "commit": 22,
+        "read": 88,
+        "buffer_update": 20
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 3,
+            "buffer_update": 1,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 2,
+            "buffer_create": 3,
+            "buffer_update": 1,
+            "commit": 2,
+            "read": 8
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "limited",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 20.0
+        },
+        "identity": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        },
+        "origin": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        },
+        "origin_identity": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[False-False-True-19]",
+      "seconds": 0.071,
+      "operation_results": {
+        "allowed": 20,
+        "limited": 1
+      },
+      "stage_counts": {
+        "begin": 21,
+        "buffer_create": 61,
+        "commit": 21,
+        "read": 84,
+        "buffer_update": 19
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "limited",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 3,
+            "buffer_update": 1,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 20.0
+        },
+        "identity": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        },
+        "origin": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        },
+        "origin_identity": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        }
+      }
+    },
+    {
+      "test": "test_sdk_does_not_retry_aborted_during_bucket_read",
+      "seconds": 0.003,
+      "operation_results": {
+        "error": 1
+      },
+      "stage_counts": {
+        "begin": 1,
+        "rollback": 1
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "rollback": 1
+          },
+          "errors": [],
+          "exception_types": [
+            "AdminAdmissionUnavailable",
+            "AdminAdmissionUnavailable",
+            "Aborted"
+          ],
+          "read_after_write": false,
+          "result": "error",
+          "stage": "rollback"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {}
+    },
+    {
+      "test": "test_two_administrators_simultaneously_share_aggregate",
+      "seconds": 2.036,
+      "operation_results": {
+        "allowed": 2
+      },
+      "stage_counts": {
+        "begin": 3,
+        "buffer_create": 10,
+        "commit": 3,
+        "read": 12,
+        "buffer_update": 2
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 2,
+            "buffer_create": 6,
+            "buffer_update": 2,
+            "commit": 2,
+            "read": 8
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        },
+        "origin": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "origin_identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        }
+      }
+    },
+    {
+      "test": "test_four_admin_burst_and_targeted_recovery[10-10]",
+      "seconds": 0.061,
+      "operation_results": {
+        "allowed": 11,
+        "limited": 7
+      },
+      "stage_counts": {
+        "begin": 18,
+        "buffer_create": 13,
+        "commit": 18,
+        "read": 72,
+        "buffer_update": 31
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "limited",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 3,
+            "buffer_update": 1,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 10.0
+        },
+        "identity": {
+          "documents": 4,
+          "total_debit_tokens": 11.0
+        },
+        "origin": {
+          "documents": 4,
+          "total_debit_tokens": 11.0
+        },
+        "origin_identity": {
+          "documents": 4,
+          "total_debit_tokens": 11.0
+        }
+      }
+    },
+    {
+      "test": "test_four_admin_burst_and_targeted_recovery[20-16]",
+      "seconds": 0.045,
+      "operation_results": {
+        "allowed": 16
+      },
+      "stage_counts": {
+        "begin": 16,
+        "buffer_create": 13,
+        "commit": 16,
+        "read": 64,
+        "buffer_update": 51
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_update": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_update": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 16.0
+        },
+        "identity": {
+          "documents": 4,
+          "total_debit_tokens": 16.0
+        },
+        "origin": {
+          "documents": 4,
+          "total_debit_tokens": 16.0
+        },
+        "origin_identity": {
+          "documents": 4,
+          "total_debit_tokens": 16.0
+        }
+      }
+    },
+    {
+      "test": "test_two_administrators_simultaneously_share_aggregate",
+      "seconds": 2.018,
+      "operation_results": {
+        "allowed": 2
+      },
+      "stage_counts": {
+        "begin": 3,
+        "buffer_create": 10,
+        "commit": 3,
+        "read": 12,
+        "buffer_update": 2
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 2,
+            "buffer_create": 6,
+            "buffer_update": 2,
+            "commit": 2,
+            "read": 8
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        },
+        "origin": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "origin_identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        }
+      }
+    },
+    {
+      "test": "test_four_admin_burst_and_targeted_recovery[10-10]",
+      "seconds": 0.052,
+      "operation_results": {
+        "allowed": 11,
+        "limited": 7
+      },
+      "stage_counts": {
+        "begin": 18,
+        "buffer_create": 13,
+        "commit": 18,
+        "read": 72,
+        "buffer_update": 31
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "limited",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 3,
+            "buffer_update": 1,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 10.0
+        },
+        "identity": {
+          "documents": 4,
+          "total_debit_tokens": 11.0
+        },
+        "origin": {
+          "documents": 4,
+          "total_debit_tokens": 11.0
+        },
+        "origin_identity": {
+          "documents": 4,
+          "total_debit_tokens": 11.0
+        }
+      }
+    },
+    {
+      "test": "test_four_admin_burst_and_targeted_recovery[20-16]",
+      "seconds": 0.046,
+      "operation_results": {
+        "allowed": 16
+      },
+      "stage_counts": {
+        "begin": 16,
+        "buffer_create": 13,
+        "commit": 16,
+        "read": 64,
+        "buffer_update": 51
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_update": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_update": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 16.0
+        },
+        "identity": {
+          "documents": 4,
+          "total_debit_tokens": 16.0
+        },
+        "origin": {
+          "documents": 4,
+          "total_debit_tokens": 16.0
+        },
+        "origin_identity": {
+          "documents": 4,
+          "total_debit_tokens": 16.0
+        }
+      }
+    },
+    {
+      "test": "test_reference_transition_preserves_origin_budgets",
+      "seconds": 0.023,
+      "operation_results": {
+        "allowed": 6,
+        "limited": 1
+      },
+      "stage_counts": {
+        "begin": 7,
+        "buffer_create": 4,
+        "commit": 7,
+        "read": 26,
+        "buffer_update": 18
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "limited",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_update": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 3.0
+        },
+        "identity": {
+          "documents": 1,
+          "total_debit_tokens": 4.0
+        },
+        "origin": {
+          "documents": 1,
+          "total_debit_tokens": 4.0
+        },
+        "origin_identity": {
+          "documents": 1,
+          "total_debit_tokens": 5.0
+        }
+      }
+    },
+    {
+      "test": "test_divergent_reference_policy_is_unavailable_without_partial_debit",
+      "seconds": 0.011,
+      "operation_results": {
+        "allowed": 1,
+        "error": 1
+      },
+      "stage_counts": {
+        "begin": 2,
+        "buffer_create": 4,
+        "commit": 1,
+        "read": 8,
+        "rollback": 1
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "read": 4,
+            "rollback": 1
+          },
+          "errors": [],
+          "exception_types": [
+            "AdminAdmissionUnavailable",
+            "AdminAdmissionUnavailable",
+            "ValueError"
+          ],
+          "read_after_write": false,
+          "result": "error",
+          "stage": "rollback"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 1.0
+        },
+        "identity": {
+          "documents": 1,
+          "total_debit_tokens": 1.0
+        },
+        "origin": {
+          "documents": 1,
+          "total_debit_tokens": 1.0
+        },
+        "origin_identity": {
+          "documents": 1,
+          "total_debit_tokens": 1.0
+        }
+      }
+    },
+    {
+      "test": "test_four_atomic_documents_shared_identity_and_recovery",
+      "seconds": 0.034,
+      "operation_results": {
+        "allowed": 6,
+        "limited": 1
+      },
+      "stage_counts": {
+        "begin": 7,
+        "buffer_create": 14,
+        "commit": 7,
+        "read": 28,
+        "buffer_update": 10
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "limited",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 2,
+            "buffer_update": 2,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 4.0
+        },
+        "identity": {
+          "documents": 1,
+          "total_debit_tokens": 5.0
+        },
+        "origin": {
+          "documents": 6,
+          "total_debit_tokens": 6.0
+        },
+        "origin_identity": {
+          "documents": 6,
+          "total_debit_tokens": 6.0
+        }
+      }
+    },
+    {
+      "test": "test_concurrent_instances_share_aggregate_without_oversubscription",
+      "seconds": 4.046,
+      "operation_results": {
+        "limited": 4,
+        "allowed": 3
+      },
+      "stage_counts": {
+        "begin": 16,
+        "buffer_create": 42,
+        "buffer_update": 6,
+        "commit": 16,
+        "read": 64
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 3,
+            "buffer_create": 7,
+            "buffer_update": 1,
+            "commit": 3,
+            "read": 12
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            },
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "limited",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "limited",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 3.0
+        },
+        "identity": {
+          "documents": 3,
+          "total_debit_tokens": 3.0
+        },
+        "origin": {
+          "documents": 3,
+          "total_debit_tokens": 3.0
+        },
+        "origin_identity": {
+          "documents": 3,
+          "total_debit_tokens": 3.0
+        }
+      }
+    },
+    {
+      "test": "test_transaction_failure_and_uncertain_commit[before_commit]",
+      "seconds": 0.005,
+      "operation_results": {
+        "error": 1
+      },
+      "stage_counts": {
+        "begin": 1,
+        "buffer_create": 4,
+        "read": 4,
+        "rollback": 1
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "read": 4,
+            "rollback": 1
+          },
+          "errors": [],
+          "exception_types": [
+            "AdminAdmissionUnavailable",
+            "AdminAdmissionUnavailable",
+            "RuntimeError"
+          ],
+          "read_after_write": false,
+          "result": "error",
+          "stage": "rollback"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {}
+    },
+    {
+      "test": "test_transaction_failure_and_uncertain_commit[aborted]",
+      "seconds": 0.005,
+      "operation_results": {
+        "error": 1
+      },
+      "stage_counts": {
+        "begin": 1,
+        "buffer_create": 4,
+        "read": 4,
+        "rollback": 1
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "read": 4,
+            "rollback": 1
+          },
+          "errors": [],
+          "exception_types": [
+            "AdminAdmissionUnavailable",
+            "AdminAdmissionUnavailable",
+            "Aborted"
+          ],
+          "read_after_write": false,
+          "result": "error",
+          "stage": "rollback"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {}
+    },
+    {
+      "test": "test_transaction_failure_and_uncertain_commit[uncertain]",
+      "seconds": 0.006,
+      "operation_results": {
+        "error": 1
+      },
+      "stage_counts": {
+        "begin": 1,
+        "buffer_create": 4,
+        "commit": 1,
+        "read": 4,
+        "rollback": 1
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "commit": 1,
+            "read": 4,
+            "rollback": 1
+          },
+          "errors": [
+            {
+              "stage": "rollback",
+              "types": [
+                "ValueError",
+                "RuntimeError"
+              ]
+            }
+          ],
+          "exception_types": [
+            "AdminAdmissionUnavailable",
+            "AdminAdmissionUnavailable",
+            "ValueError",
+            "RuntimeError"
+          ],
+          "read_after_write": false,
+          "result": "error",
+          "stage": "rollback"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 1.0
+        },
+        "identity": {
+          "documents": 1,
+          "total_debit_tokens": 1.0
+        },
+        "origin": {
+          "documents": 1,
+          "total_debit_tokens": 1.0
+        },
+        "origin_identity": {
+          "documents": 1,
+          "total_debit_tokens": 1.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[True-True-True-0]",
+      "seconds": 6.056,
+      "operation_results": {
+        "allowed": 2
+      },
+      "stage_counts": {
+        "begin": 7,
+        "buffer_create": 24,
+        "commit": 7,
+        "read": 28,
+        "buffer_update": 4
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 3,
+            "buffer_create": 12,
+            "commit": 3,
+            "read": 12
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            },
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 4,
+            "buffer_create": 12,
+            "buffer_update": 4,
+            "commit": 4,
+            "read": 16
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            },
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            },
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "identity": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "origin": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "origin_identity": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[True-True-False-0]",
+      "seconds": 0.016,
+      "operation_results": {
+        "allowed": 2
+      },
+      "stage_counts": {
+        "begin": 2,
+        "buffer_create": 4,
+        "commit": 2,
+        "read": 8,
+        "buffer_update": 4
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_update": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "identity": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "origin": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "origin_identity": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[True-False-True-0]",
+      "seconds": 4.041,
+      "operation_results": {
+        "allowed": 2
+      },
+      "stage_counts": {
+        "begin": 5,
+        "buffer_create": 18,
+        "buffer_update": 2,
+        "commit": 5,
+        "read": 20
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 3,
+            "buffer_create": 10,
+            "buffer_update": 2,
+            "commit": 3,
+            "read": 12
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            },
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 2,
+            "buffer_create": 8,
+            "commit": 2,
+            "read": 8
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "identity": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "origin": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        },
+        "origin_identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[True-False-False-0]",
+      "seconds": 0.013,
+      "operation_results": {
+        "allowed": 2
+      },
+      "stage_counts": {
+        "begin": 2,
+        "buffer_create": 6,
+        "commit": 2,
+        "read": 8,
+        "buffer_update": 2
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 2,
+            "buffer_update": 2,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "identity": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "origin": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        },
+        "origin_identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[False-True-True-0]",
+      "seconds": 2.029,
+      "operation_results": {
+        "allowed": 2
+      },
+      "stage_counts": {
+        "begin": 3,
+        "buffer_create": 10,
+        "buffer_update": 2,
+        "commit": 3,
+        "read": 12
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 2,
+            "buffer_create": 6,
+            "buffer_update": 2,
+            "commit": 2,
+            "read": 8
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        },
+        "origin": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "origin_identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[False-True-False-0]",
+      "seconds": 0.016,
+      "operation_results": {
+        "allowed": 2
+      },
+      "stage_counts": {
+        "begin": 2,
+        "buffer_create": 6,
+        "commit": 2,
+        "read": 8,
+        "buffer_update": 2
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 2,
+            "buffer_update": 2,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        },
+        "origin": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "origin_identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[False-False-True-0]",
+      "seconds": 2.031,
+      "operation_results": {
+        "allowed": 2
+      },
+      "stage_counts": {
+        "begin": 3,
+        "buffer_create": 11,
+        "commit": 3,
+        "read": 12,
+        "buffer_update": 1
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 2,
+            "buffer_create": 7,
+            "buffer_update": 1,
+            "commit": 2,
+            "read": 8
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        },
+        "origin": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        },
+        "origin_identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[False-False-False-0]",
+      "seconds": 0.017,
+      "operation_results": {
+        "allowed": 2
+      },
+      "stage_counts": {
+        "begin": 2,
+        "buffer_create": 7,
+        "commit": 2,
+        "read": 8,
+        "buffer_update": 1
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 4,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 3,
+            "buffer_update": 1,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 2.0
+        },
+        "identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        },
+        "origin": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        },
+        "origin_identity": {
+          "documents": 2,
+          "total_debit_tokens": 2.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[True-True-True-19]",
+      "seconds": 2.118,
+      "operation_results": {
+        "allowed": 20,
+        "error": 1
+      },
+      "stage_counts": {
+        "begin": 22,
+        "buffer_create": 64,
+        "commit": 21,
+        "read": 88,
+        "buffer_update": 20,
+        "rollback": 1
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "read": 4,
+            "rollback": 1
+          },
+          "errors": [
+            {
+              "stage": "read",
+              "types": [
+                "Aborted",
+                "_MultiThreadedRendezvous"
+              ]
+            }
+          ],
+          "exception_types": [
+            "AdminAdmissionUnavailable",
+            "AdminAdmissionUnavailable",
+            "Aborted",
+            "_MultiThreadedRendezvous"
+          ],
+          "read_after_write": false,
+          "result": "error",
+          "stage": "rollback"
+        },
+        {
+          "counts": {
+            "begin": 2,
+            "buffer_create": 6,
+            "buffer_update": 2,
+            "commit": 2,
+            "read": 8
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 20.0
+        },
+        "identity": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        },
+        "origin": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        },
+        "origin_identity": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[True-False-True-19]",
+      "seconds": 2.108,
+      "operation_results": {
+        "allowed": 20,
+        "limited": 1
+      },
+      "stage_counts": {
+        "begin": 22,
+        "buffer_create": 64,
+        "commit": 22,
+        "read": 88,
+        "buffer_update": 20
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 3,
+            "buffer_update": 1,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 2,
+            "buffer_create": 3,
+            "buffer_update": 1,
+            "commit": 2,
+            "read": 8
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "limited",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 20.0
+        },
+        "identity": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        },
+        "origin": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        },
+        "origin_identity": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[False-True-True-19]",
+      "seconds": 2.111,
+      "operation_results": {
+        "allowed": 20,
+        "error": 1
+      },
+      "stage_counts": {
+        "begin": 22,
+        "buffer_create": 64,
+        "commit": 21,
+        "read": 88,
+        "buffer_update": 20,
+        "rollback": 1
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "read": 4,
+            "rollback": 1
+          },
+          "errors": [
+            {
+              "stage": "read",
+              "types": [
+                "Aborted",
+                "_MultiThreadedRendezvous"
+              ]
+            }
+          ],
+          "exception_types": [
+            "AdminAdmissionUnavailable",
+            "AdminAdmissionUnavailable",
+            "Aborted",
+            "_MultiThreadedRendezvous"
+          ],
+          "read_after_write": false,
+          "result": "error",
+          "stage": "rollback"
+        },
+        {
+          "counts": {
+            "begin": 2,
+            "buffer_create": 6,
+            "buffer_update": 2,
+            "commit": 2,
+            "read": 8
+          },
+          "errors": [
+            {
+              "stage": "commit",
+              "types": [
+                "Aborted",
+                "_InactiveRpcError"
+              ]
+            }
+          ],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 20.0
+        },
+        "identity": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        },
+        "origin": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        },
+        "origin_identity": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        }
+      }
+    },
+    {
+      "test": "test_comparison_consistency_and_authentication_boundary[False-False-True-19]",
+      "seconds": 0.081,
+      "operation_results": {
+        "allowed": 20,
+        "limited": 1
+      },
+      "stage_counts": {
+        "begin": 21,
+        "buffer_create": 61,
+        "commit": 21,
+        "read": 84,
+        "buffer_update": 19
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "limited",
+          "stage": "commit"
+        },
+        {
+          "counts": {
+            "begin": 1,
+            "buffer_create": 3,
+            "buffer_update": 1,
+            "commit": 1,
+            "read": 4
+          },
+          "errors": [],
+          "read_after_write": false,
+          "result": "allowed",
+          "stage": "commit"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {
+        "aggregate": {
+          "documents": 1,
+          "total_debit_tokens": 20.0
+        },
+        "identity": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        },
+        "origin": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        },
+        "origin_identity": {
+          "documents": 20,
+          "total_debit_tokens": 20.0
+        }
+      }
+    },
+    {
+      "test": "test_sdk_does_not_retry_aborted_during_bucket_read",
+      "seconds": 0.003,
+      "operation_results": {
+        "error": 1
+      },
+      "stage_counts": {
+        "begin": 1,
+        "rollback": 1
+      },
+      "read_after_write": false,
+      "last_two_operations": [
+        {
+          "counts": {
+            "begin": 1,
+            "rollback": 1
+          },
+          "errors": [],
+          "exception_types": [
+            "AdminAdmissionUnavailable",
+            "AdminAdmissionUnavailable",
+            "Aborted"
+          ],
+          "read_after_write": false,
+          "result": "error",
+          "stage": "rollback"
+        }
+      ],
+      "other_errors": [],
+      "persisted_scopes": {}
+    }
+  ]
+}

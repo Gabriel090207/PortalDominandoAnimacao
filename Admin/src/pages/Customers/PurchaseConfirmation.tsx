@@ -1,4 +1,5 @@
 import {useEffect,useState,useSyncExternalStore} from 'react'
+import {StatusBadge} from './CustomerStatus'
 import type {SessionState,SessionStore} from '../../session/sessionStore'
 import {createPurchaseConfirmationStore} from './purchaseConfirmationStore'
 import type {PurchaseConfirmationStore} from './purchaseConfirmationStore'
@@ -8,7 +9,8 @@ export function PurchaseConfirmationView({confirmationStore}:{confirmationStore:
   const loading=state.status==='idle'||state.status==='loading'
   return <section className="purchase-confirmation" aria-label="Compra aprovada registrada" aria-busy={loading}>
     {loading?<p role="status">Consultando confirmação da compra…</p>
-      :state.status==='ready'&&state.confirmation?<><p><strong>Compra aprovada registrada:</strong> {state.confirmation.approved_purchase_recorded?'Sim':'Não encontrada'}</p>
+      :state.status==='ready'&&state.confirmation?<><p><strong>Compra aprovada registrada:</strong> <StatusBadge tone={state.confirmation.approved_purchase_recorded?'positive':'neutral'}>{state.confirmation.approved_purchase_recorded?'Sim':'Não encontrada'}</StatusBadge></p>
+        <p className="purchase-note">Registro histórico de aprovação; não confirma a validade financeira atual.</p><p><StatusBadge>Validade atual não verificada</StatusBadge></p>
         <p className="purchase-note">Em caso de dúvida, confira a compra diretamente na Kirvano.</p></>
       :<><p role="alert">{state.message}</p>{state.status==='error'&&<button type="button" className="secondary-button" onClick={()=>void confirmationStore.retry()}>Consultar confirmação novamente</button>}</>}
   </section>
