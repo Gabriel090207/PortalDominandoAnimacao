@@ -4,6 +4,8 @@ Only --send-once --confirm-single-send may cross the network boundary, in a futu
 explicitly authorized execution. No integration with public runtime or startup.
 """
 import argparse
+from dataclasses import replace
+from app.domain.welcome_audience import WelcomeAudience
 from contextlib import contextmanager, redirect_stderr
 from datetime import datetime, timezone
 import fcntl
@@ -187,6 +189,7 @@ def prepare(*, recipient_file, not_before, env_file=BACKEND/'.env', credentials_
         require_emulator(environment)
         config = local_configuration(env_file,environment)
         recipient = read_recipient(recipient_file,credentials_root)
+        config = replace(config,audience=WelcomeAudience('test',SecretStr(recipient)))
         cutoff = cutoff_instant(not_before)
         now = (clock or (lambda:datetime.now(timezone.utc)))()
         if now < cutoff:raise ControlledTestError()
@@ -199,6 +202,7 @@ def prepare(*, recipient_file, not_before, env_file=BACKEND/'.env', credentials_
             operation_id = uuid4().hex
             data = sale_payload(now,email=recipient,sale_id='resend-test-'+operation_id)
             data['customer']['name']='Cliente Exemplo'
+            data['payment']['finished_at']=now.astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
             event = normalize_event(data)
             classified = classify_commercial_event(data,timezone_name='UTC')
             if classified.candidate is None:raise ControlledTestError()
@@ -240,6 +244,7 @@ def send_once(*, recipient_file, confirmed=False, env_file=BACKEND/'.env', crede
         require_emulator(environment)
         config = local_configuration(env_file,environment)
         recipient = read_recipient(recipient_file,credentials_root)
+        config = replace(config,audience=WelcomeAudience('test',SecretStr(recipient)))
         with operation_lock(credentials_root) as path:
             operation = Operation.model_validate_json(_private_file(path))
             if operation.status != 'prepared' or operation.recipient_digest != _digest(recipient):raise ControlledTestError()

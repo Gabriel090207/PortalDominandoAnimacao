@@ -10,6 +10,7 @@ from commerce_fake import Client, Transaction, Ref
 from test_kirvano_commerce_transaction import receive, docs
 from test_kirvano_commercial import payload
 from app.config.purchase_welcome import PurchaseWelcomeConfig, load_purchase_welcome_config
+from app.domain.welcome_audience import WelcomeAudience
 from app.services.purchase_welcome_email import WelcomeEmailContact, WelcomeEmailConfigurationError
 from app.services.purchase_welcome_dispatch import PurchaseWelcomeDispatchService, WelcomeDispatchUnavailable
 from app.services.resend_email_provider import ResendEmailProvider
@@ -22,7 +23,7 @@ NOW=datetime(2026,10,27,tzinfo=timezone.utc)
 
 def configuration():
     return PurchaseWelcomeConfig(True,SecretStr('re_synthetic_test_secret'),
-        'mail@example.com',WelcomeEmailContact('https://wa.me/15555550123'))
+        'mail@example.com',WelcomeEmailContact('https://wa.me/15555550123'),WelcomeAudience('all'),datetime(2026,1,1,tzinfo=timezone.utc))
 
 
 @pytest.fixture
@@ -39,7 +40,7 @@ def setup(monkeypatch):
         return run
     monkeypatch.setattr('app.persistence.welcome_emails_repository.firestore.transactional',transactional)
     identifier=next(iter(docs(client,'transactional_emails'))).split('/')[1]
-    repository=WelcomeEmailsRepository(client)
+    repository=WelcomeEmailsRepository(client,audience=configuration().audience,not_before=configuration().not_before)
     return client,identifier,repository
 
 
@@ -191,7 +192,9 @@ def test_corrupt_binding_no_http(setup,field,value):
 
 def env():
     return {'PURCHASE_WELCOME_SEND_ENABLED':'true','RESEND_API_KEY':'re_synthetic_test_secret',
-        'PURCHASE_WELCOME_FROM':'mail@example.com','PURCHASE_WELCOME_WHATSAPP_URL':'https://wa.me/15555550123'}
+        'PURCHASE_WELCOME_FROM':'mail@example.com','PURCHASE_WELCOME_WHATSAPP_URL':'https://wa.me/15555550123',
+        'PURCHASE_WELCOME_AUDIENCE_MODE':'test','PURCHASE_WELCOME_TEST_AUTHORIZED':'true',
+        'PURCHASE_WELCOME_TEST_RECIPIENT':'buyer@example.com','PURCHASE_WELCOME_NOT_BEFORE':'2026-01-01T00:00:00Z'}
 
 
 def test_disabled_config_does_not_read_file(tmp_path):

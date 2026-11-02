@@ -1,5 +1,10 @@
 # PASSO 96 — instalação controlada no lifespan
 
+Atualização: o [PASSO 97.22](docs/RESEND_PUBLIC_BOOTSTRAP.md) conecta o bootstrap
+por ambiente no lifespan público, condicionado a flag, audiência de teste autorizada,
+corte e projeto. O comportamento sem seleção continua desativado. O texto abaixo
+registra a instalação explicitamente injetada preparada no PASSO 96.
+
 Implementação e validação com provedores fake. Não habilita envio, Admin, domínio,
 serviço externo ou transporte real. Não modifica transações comerciais ou a rota
 Kirvano nesta etapa. Reutiliza dispatcher, reserva, template, trigger e recuperação.

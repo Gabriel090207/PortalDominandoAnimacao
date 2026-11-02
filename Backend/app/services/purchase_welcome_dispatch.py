@@ -19,7 +19,7 @@ class PurchaseWelcomeDispatchService:
     def __init__(self, repository, provider, config, *, clock=None):
         if not isinstance(config, PurchaseWelcomeConfig) or not config.enabled:
             raise WelcomeEmailConfigurationError()
-        self.repository, self.provider, self.config = repository, provider, config
+        self.repository, self.provider, self.config = repository.for_policy(config.audience,config.not_before), provider, config
         self.clock = clock or (lambda: datetime.now(timezone.utc))
 
     def _request(self, intent):

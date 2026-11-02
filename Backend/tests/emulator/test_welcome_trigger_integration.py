@@ -39,7 +39,7 @@ def scenario(emulator_client,monkeypatch):
     app=FastAPI(lifespan=purchase_welcome_lifespan);app.include_router(router)
     @app.get('/health')
     def health():return {'status':'ok'}
-    cutoff=datetime.now(timezone.utc)
+    cutoff=datetime.now(timezone.utc)-timedelta(seconds=5)
     runtime=install_purchase_welcome_trigger(app,firestore_client=client,config=configuration(),
         policy=WelcomeTriggerPolicy(cutoff,True,2),transport=httpx.MockTransport(http))
     yield app,runtime,args,ref,calls,persist,cutoff

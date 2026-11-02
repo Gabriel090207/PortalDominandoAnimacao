@@ -6,6 +6,7 @@ Never loads private .env, calls providers, or invokes global emulator cleanup.
 from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 import pytest
 from fastapi.testclient import TestClient
 from test_purchase_welcome_integration import emulator_client
@@ -27,6 +28,9 @@ def flow(emulator_client,monkeypatch):
     raw,prepare,owned=emulator_client
     event,result,identity,user_id=prepare()
     data=payload();data['sale_id']=result.candidate.sale_id
+    zone=ZoneInfo('America/Sao_Paulo')
+    data['payment']['finished_at']=result.candidate.valid_from.astimezone(zone).strftime('%Y-%m-%d %H:%M:%S')
+    data['plan']['next_charge_date']=result.candidate.valid_until.astimezone(zone).strftime('%Y-%m-%d %H:%M:%S')
     data['customer']={'email':result.candidate.email_normalized,'name':'  Gabriel Oliveira  '}
     namespace=raw.collection('step9718_test_namespaces').document(uuid4().hex)
     class ScopedClient:
@@ -44,7 +48,7 @@ def flow(emulator_client,monkeypatch):
     monkeypatch.setattr('app.persistence.kirvano_commerce_repository.get_firestore_client',lambda:client)
     fake=Mock();fake.send.return_value=WelcomeProviderResult(reason='accepted',provider_id=PROVIDER_ID)
     install=WelcomeRuntimeInstallation(True,configuration(),
-        WelcomeTriggerPolicy(datetime.now(timezone.utc)-timedelta(seconds=1),False,1),
+        WelcomeTriggerPolicy(datetime.now(timezone.utc)-timedelta(seconds=5),False,1),
         client,raw.project,lambda config:fake,True)
     app=create_app(welcome_installation=install)
     try:

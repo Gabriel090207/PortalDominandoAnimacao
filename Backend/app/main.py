@@ -8,7 +8,7 @@ from app.services.purchase_welcome_trigger import purchase_welcome_lifespan
 
 
 def create_app(*, welcome_installation=None):
-    """Existing public app; optional explicit email installation, never env opt-in."""
+    """Public app; disabled-by-default email bootstrap is resolved at lifespan startup."""
     application = FastAPI(
         title="Dominando Animação API",
         description="Backend oficial da plataforma Dominando Animação.",

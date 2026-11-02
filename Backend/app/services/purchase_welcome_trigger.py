@@ -1,7 +1,7 @@
 """Opt-in post-commit trigger and bounded durable recovery. No polling or routes."""
 import asyncio
 from contextlib import asynccontextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from starlette.concurrency import run_in_threadpool
 from app.services.purchase_welcome_dispatch import create_purchase_welcome_dispatch
@@ -67,7 +67,8 @@ def install_purchase_welcome_trigger(app, *, firestore_client, config, policy, t
         or getattr(app.state, 'purchase_welcome_trigger', None) is not None):
         raise WelcomeEmailConfigurationError()
     runtime = PurchaseWelcomeTrigger(create_purchase_welcome_dispatch(firestore_client=firestore_client,
-        config=config, transport=transport, provider=provider), policy)
+        config=replace(config,not_before=policy.not_before if config.not_before is None else max(config.not_before,policy.not_before)),
+        transport=transport, provider=provider), policy)
     app.state.purchase_welcome_trigger = runtime
     return runtime
 
@@ -88,7 +89,9 @@ def schedule_purchase_welcome(request, tasks, payload, result):
 
 @asynccontextmanager
 async def purchase_welcome_lifespan(app):
+    from app.services.purchase_welcome_bootstrap import prepare_public_welcome, clear_public_welcome
     from app.services.purchase_welcome_runtime import start_purchase_welcome_runtime, stop_purchase_welcome_runtime
+    automatic = prepare_public_welcome(app)
     owned = start_purchase_welcome_runtime(app)
     runtime = getattr(app.state, 'purchase_welcome_trigger', None)
     task = None
@@ -103,6 +106,7 @@ async def purchase_welcome_lifespan(app):
                 await task  # finite batch; does not release in-progress reservations
         finally:
             stop_purchase_welcome_runtime(app, owned)
+            if automatic:clear_public_welcome(app)
 
 
 def configure_purchase_welcome_trigger(app, *, firestore_client, transport, environ=None, env_file=None):
@@ -121,9 +125,7 @@ def configure_purchase_welcome_trigger(app, *, firestore_client, transport, envi
         env = os.environ if environ is None else environ
         values = dict(dotenv_values(env_file, interpolate=False)) if env_file is not None else {}
         values.update(env)
-        cutoff = values.get('PURCHASE_WELCOME_NOT_BEFORE')
-        if not isinstance(cutoff, str) or 'T' not in cutoff: raise ValueError
-        cutoff = datetime.fromisoformat(cutoff)
+        cutoff = config.not_before
         flag = values.get('PURCHASE_WELCOME_RECOVERY_ENABLED', 'false')
         if flag not in ('true', 'false'): raise ValueError
         size = values.get('PURCHASE_WELCOME_RECOVERY_BATCH_SIZE', '5')

@@ -1,5 +1,10 @@
 # PASSO 97.21 — elegibilidade por produto, sem whitelist de ofertas
 
+Atualização de inicialização: [PASSO 97.22](RESEND_PUBLIC_BOOTSTRAP.md). O bootstrap
+público agora pode ser selecionado por configuração completa, com audiência de
+teste autorizada; flag false mantém envio desativado. As regras comerciais abaixo
+continuam válidas. As observações sobre bootstrap ainda pendente são históricas.
+
 ## Regra atual
 
 Produto oficial já utilizado pelo Backend:

@@ -1,6 +1,8 @@
 """Actual commerce transaction, UUID-only cleanup. NEVER uses global emulator wipe."""
 from concurrent.futures import ThreadPoolExecutor
 from uuid import uuid4
+from datetime import datetime,timedelta,timezone
+from zoneinfo import ZoneInfo
 import copy
 import pytest
 from google.cloud import firestore
@@ -26,6 +28,9 @@ def emulator_client(monkeypatch):
     def prepare(data=None):
         data=copy.deepcopy(data if data is not None else payload())
         namespace=uuid4().hex
+        paid=datetime.now(timezone.utc).astimezone(ZoneInfo('America/Sao_Paulo')).replace(microsecond=0)
+        data['payment']['finished_at']=paid.strftime('%Y-%m-%d %H:%M:%S')
+        data['plan']['next_charge_date']=(paid+timedelta(days=30)).strftime('%Y-%m-%d %H:%M:%S')
         data['sale_id']='step93-'+namespace
         data['customer']={'email':f'step93-{namespace}@example.com','name':'Cliente Sintético'}
         event,result,identity=prepared(data);candidate=result.candidate

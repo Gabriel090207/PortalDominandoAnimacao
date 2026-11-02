@@ -25,7 +25,9 @@ class WelcomeRuntimeInstallation:
         if not isinstance(self.config, PurchaseWelcomeConfig) or not isinstance(self.policy, WelcomeTriggerPolicy):
             raise WelcomeEmailConfigurationError()
         # Revalidate existing contracts, even if a caller bypassed frozen constructors.
-        PurchaseWelcomeConfig(self.config.enabled,self.config.api_key,self.config.sender,self.config.contact)
+        PurchaseWelcomeConfig(self.config.enabled,self.config.api_key,self.config.sender,self.config.contact,
+            self.config.audience,self.config.not_before)
+        if self.config.audience.mode == 'disabled':raise WelcomeEmailConfigurationError()
         WelcomeTriggerPolicy(self.policy.not_before,self.policy.recovery_enabled,self.policy.batch_size)
         project = self.expected_project_id
         if not isinstance(project,str) or not re.fullmatch(r'[a-z][a-z0-9-]{4,28}[a-z0-9]',project):

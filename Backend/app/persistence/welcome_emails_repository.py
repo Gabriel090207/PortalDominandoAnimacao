@@ -2,6 +2,7 @@
 from datetime import timedelta
 from google.cloud import firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
+from app.domain.welcome_audience import WelcomeAudience
 from app.domain.welcome_dispatch import (
     WelcomeDispatchRecord, WelcomeProviderResult, WelcomeRequest, resend_idempotency_key,
 )
@@ -16,8 +17,13 @@ class WelcomeEmailStorageError(RuntimeError):
 
 
 class WelcomeEmailsRepository:
-    def __init__(self, client):
+    def __init__(self, client, *, audience=None, not_before=None):
         self.client = client
+        self._audience = WelcomeAudience() if audience is None else WelcomeAudience(audience.mode,audience.recipient)
+        self._not_before = not_before
+
+    def for_policy(self, audience, not_before):
+        return type(self)(self.client,audience=audience,not_before=not_before)
 
     def _ref(self, identifier):
         resend_idempotency_key(identifier)
@@ -54,6 +60,7 @@ class WelcomeEmailsRepository:
             or not variant.exists
             or variant.to_dict().get('normalized_payload', {}).get('event') != 'SALE_APPROVED'):
             raise ValueError
+        return purchase
 
     def reserve(self, identifier, *, attempt_id, now, build_request, not_before=None):
         try:
@@ -63,13 +70,23 @@ class WelcomeEmailsRepository:
             raise WelcomeEmailStorageError() from None
 
     def _reserve(self, transaction, ref, attempt_id, now, build_request, not_before=None):
+        if self._not_before is not None:
+            not_before = self._not_before if not_before is None else max(self._not_before,not_before)
+        if not_before is None:return None  # No temporal authorization, no claim.
         record = self._read(transaction, ref)
         if record is None or record.status != 'pending':
             return None
+        if not self._audience.allows(record.recipient):return None
         if not_before is not None:
             if not_before.utcoffset() is None: raise ValueError
             if record.created_at < not_before: return None
-        self._eligible(transaction, record)
+        purchase = self._eligible(transaction, record)
+        if not_before is not None:
+            # valid_from is the approved payment.finished_at, validated and
+            # converted to UTC by the commercial classifier. created_at is the
+            # server timestamp. A newly processed OLD sale must not pass.
+            if purchase['valid_from'] < not_before or purchase['created_at'] < not_before or purchase['valid_from'] > now:
+                return None
         request = WelcomeRequest.model_validate(build_request(record.pending_intent()).model_dump())
         changes = {'status':'in_progress', 'attempt_id':attempt_id, 'reserved_at':now,
             'request':request.model_dump(), 'request_digest':request.digest(),
