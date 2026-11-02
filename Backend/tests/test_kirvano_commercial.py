@@ -53,8 +53,8 @@ class CommercialTests(unittest.TestCase):
 
     def test_product_matching(self):
         good=payload()['products'][0]
-        for products in [[{**good,'id':'other'}],[{**good,'offer_id':'other'}],
-                         [{**good,'id':'other'},{**good,'offer_id':'other'}],
+        for products in [[{**good,'id':'other'}],
+                         [{**good,'id':'other'},{**good,'id':'another'}],
                          [{**good,'is_order_bump':True}],[{**good,'is_order_bump':0}],
                          [{'id':good['id'],'offer_id':good['offer_id']}],[]]:
             data=payload();data['products']=products
@@ -138,7 +138,7 @@ class CommercialTests(unittest.TestCase):
         for zone in (None,'Invalid/Zone'):
             data=payload();data['event']='SUBSCRIPTION_RENEWED'
             self.assertEqual(classify(data,zone).classification,State.REVIEW_REQUIRED)
-        for field,value in [('id','other'),('offer_id','other'),('is_order_bump',True)]:
+        for field,value in [('id','other'),('offer_id',None),('is_order_bump',True)]:
             data=payload();data['event']='SUBSCRIPTION_RENEWED';data['products'][0][field]=value
             self.assertEqual(classify(data).classification,State.REVIEW_REQUIRED)
 
@@ -195,7 +195,7 @@ def test_cancellation_rejects_invalid_fields():
             assert classify(data).candidate is None
     for field in ('id', 'offer_id', 'is_order_bump'):
         data = cancellation_payload()
-        data['products'][0][field] = True if field == 'is_order_bump' else 'other'
+        data['products'][0][field] = True if field == 'is_order_bump' else None if field == 'offer_id' else 'other'
         assert classify(data).candidate is None
     data = cancellation_payload()
     data['products'].append(copy.deepcopy(data['products'][0]))

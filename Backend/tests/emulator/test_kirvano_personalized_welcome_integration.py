@@ -61,8 +61,15 @@ def flow(emulator_client,monkeypatch):
             owned.append(user_ref)
 
 
-def test_approved_buyer_name_end_to_end_dedup_and_negative_events(flow):
+@pytest.mark.parametrize('offer',['principal','synthetic-monthly-one-real-offer'])
+def test_approved_buyer_name_end_to_end_dedup_and_negative_events(flow,offer):
     app,client,data,ref,fake,user_id,result,owned=flow
+    if offer!='principal':
+        data['products'][0]['offer_id']=offer
+        data['total_price']='R$ 1,00'
+        changed=normalize_event(data)
+        root=client.collection('kirvano_events').document(changed.logical_id)
+        owned.append(root.collection('variants').document(changed.fingerprint))
     headers={'security-token':'synthetic-personalized-token'}
     with TestClient(app) as http:
         assert http.post('/webhooks/kirvano',json=data,headers={'security-token':'invalid'}).status_code==401
@@ -78,7 +85,8 @@ def test_approved_buyer_name_end_to_end_dedup_and_negative_events(flow):
         customer=AdminCustomersRepository(client).find_by_email(data['customer']['email'])
         assert customer.customer_id==user_id and customer.activation_status=='pending'
         assert client.collection('users').document(user_id).get().to_dict()['display_name']=='Gabriel Oliveira'
-        assert client.collection('purchases').document(result.candidate.purchase_id).get().to_dict()['user_id']==user_id
+        purchase=client.collection('purchases').document(result.candidate.purchase_id).get().to_dict()
+        assert purchase['user_id']==user_id and purchase['offer_id']==data['products'][0]['offer_id']
         assert http.post('/webhooks/kirvano',json=data,headers=headers).status_code==200
         assert ref.get().to_dict()==saved
         fake.send.assert_called_once()
@@ -95,9 +103,9 @@ def test_approved_buyer_name_end_to_end_dedup_and_negative_events(flow):
         assert ref.get().to_dict()==saved
 
 
-def test_unapproved_offer_preserves_review_and_never_sends(flow):
+def test_other_product_preserves_review_and_never_sends(flow):
     app,client,data,ref,fake,_,_,owned=flow
-    data['products'][0]['offer_id']='synthetic-not-authorized-offer'
+    data['products'][0]['id']='synthetic-not-authorized-product'
     changed=normalize_event(data)
     root=client.collection('kirvano_events').document(changed.logical_id)
     owned.append(root.collection('variants').document(changed.fingerprint))

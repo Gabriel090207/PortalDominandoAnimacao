@@ -1,5 +1,11 @@
 # PASSO 97.18 — preparação da compra real (sem compra ou envio)
 
+**Atualização no [PASSO 97.21](KIRVANO_PRODUCT_ELIGIBILITY.md):** o bloqueio de
+oferta individual descrito abaixo foi substituído por elegibilidade pelo produto.
+Ofertas mensais válidas desse produto não exigem whitelist individual. Este texto
+registra o diagnóstico histórico; a instalação/habilitação do runtime continua
+pendente. A restrição temporária de despacho proposta abaixo não foi implementada.
+
 O envio real isolado anterior foi confirmado pelo usuário. Não foi repetido nem
 foi lido/alterado o registro privado para tentar outra operação. O template HTML
 aprovado é preservado byte a byte. Esta etapa NÃO habilita runtime ou Resend real.

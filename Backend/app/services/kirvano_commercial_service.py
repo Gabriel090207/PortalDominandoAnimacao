@@ -16,6 +16,7 @@ from app.domain.kirvano_commercial import (
 from app.services.kirvano_event_service import SOURCE_SCOPE, digest, normalize_event
 
 AUTHORIZED_PRODUCT_ID = "0c5f6369-5a8a-467c-ba81-61cde05b7917"
+# Legacy reference retained for existing synthetic/local fixtures, NOT a whitelist.
 AUTHORIZED_OFFER_ID = "75562bd7-4d63-4463-bc3e-53439a130710"
 _TIMESTAMP = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\Z")
 
@@ -80,12 +81,15 @@ def classify_commercial_event(payload, *, timezone_name: str | None) -> Commerci
             reasons.add(Reason.INVALID_STRUCTURE)
     matches = [item for item in data.get('products', [])
                if item.get('product_id') == AUTHORIZED_PRODUCT_ID
-               and item.get('offer_id') == AUTHORIZED_OFFER_ID
                and item.get('is_order_bump') is False]
     if not matches:
         reasons.add(Reason.PRODUCT_NOT_AUTHORIZED)
     elif len(matches) > 1:
         reasons.add(Reason.MULTIPLE_AUTHORIZED_PRODUCTS)
+    elif not isinstance(matches[0].get('offer_id'), str):
+        # Offer syntax is validated by normalize_event; a missing ID is also
+        # rejected. Preserve its actual value for lifecycle binding checks.
+        reasons.add(Reason.PRODUCT_NOT_AUTHORIZED)
     zone = None
     if isinstance(timezone_name, str) and timezone_name:
         try:
@@ -105,15 +109,16 @@ def classify_commercial_event(payload, *, timezone_name: str | None) -> Commerci
             reasons.add(Reason.INVALID_PERIOD_ORDER)
     if reasons:
         return CommercialResult(CommercialClassification.REVIEW_REQUIRED, tuple(sorted(reasons)))
+    offer_id = matches[0]['offer_id']
     subscription_id = digest(['kirvano-subscription', COMMERCIAL_IDENTITY_VERSION, SOURCE_SCOPE, sale_id])
     if cancellation:
         return CommercialResult(CommercialClassification.ELIGIBLE, (), CancellationCandidate(
-            email, sale_id, charge, 'MONTHLY', AUTHORIZED_PRODUCT_ID, AUTHORIZED_OFFER_ID,
+            email, sale_id, charge, 'MONTHLY', AUTHORIZED_PRODUCT_ID, offer_id,
             SOURCE_SCOPE, subscription_id,
         ))
     purchase_id = digest(['kirvano-charge', COMMERCIAL_IDENTITY_VERSION, SOURCE_SCOPE, sale_id, charge])
     return CommercialResult(CommercialClassification.ELIGIBLE, (), CommercialCandidate(
-        email, sale_id, charge, 'MONTHLY', AUTHORIZED_PRODUCT_ID, AUTHORIZED_OFFER_ID,
+        email, sale_id, charge, 'MONTHLY', AUTHORIZED_PRODUCT_ID, offer_id,
         start, end, SOURCE_SCOPE, subscription_id, purchase_id,
         customer_name=optional_customer_name(customer.get('name')),
     ))
