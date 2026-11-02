@@ -34,10 +34,10 @@ class LocalCustomerError(RuntimeError):
         super().__init__('Synthetic customer preparation not confirmed; inspect the local demo state. No reset was performed.')
 
 
-def sale_payload(now):
+def sale_payload(now, *, email=None, sale_id=None):
     start = now.astimezone(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)-timedelta(days=1)
-    return {'event':'SALE_APPROVED', 'status':'APPROVED', 'type':'RECURRING', 'sale_id':SALE_ID,
-        'customer':{'email':normalize_email(EMAIL)},
+    return {'event':'SALE_APPROVED', 'status':'APPROVED', 'type':'RECURRING', 'sale_id':SALE_ID if sale_id is None else sale_id,
+        'customer':{'email':normalize_email(EMAIL if email is None else email)},
         'plan':{'charge_number':1, 'charge_frequency':'MONTHLY',
                 'next_charge_date':(start+timedelta(days=30)).strftime('%Y-%m-%d %H:%M:%S')},
         'payment':{'finished_at':start.strftime('%Y-%m-%d %H:%M:%S')},

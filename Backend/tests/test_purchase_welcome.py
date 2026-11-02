@@ -106,10 +106,10 @@ def test_optional_name_rejects_unusable_metadata(value):
 def test_render_html_text_and_fake_provider_only(name,caplog):
     client=Client();data=payload();data['customer']['name']=name;receive(client,data)
     record=intent(client);message=render_purchase_welcome(record,contact=WelcomeEmailContact('https://wa.me/15555550123'))
-    assert 'liberado manualmente' in message.text
-    assert 'e-mail utilizado na compra' in message.text
-    assert 'Solicitar liberação no WhatsApp' in message.html
-    assert all(color in message.html for color in ['#050913','#141b2d','#00e0ff','#33e8ff','#a0b3d0','#ffffff'])
+    assert 'A liberação é realizada pela nossa equipe.' in message.text
+    assert 'não é necessário fazer uma nova solicitação' in message.text
+    assert 'Solicitar ativação no WhatsApp' in message.html
+    assert all(color in message.html for color in ['#0e1726','#141e30','#00bcd4','#00ffff','#1e293b','#cbd5e1','#0f172a','#25D366'])
     assert '<table role="presentation"' in message.html and 'max-width:600px' in message.html
     assert record.recipient not in message.html and record.recipient not in message.text
     assert 'buyer%40' not in message.html and '<img' not in message.html

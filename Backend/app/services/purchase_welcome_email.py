@@ -1,6 +1,8 @@
 """Pure rendering + future provider port. No credentials, network or dispatcher."""
 from dataclasses import dataclass
 from html import escape
+from pathlib import Path
+from string import Template
 import re
 from typing import Protocol
 from urllib.parse import urlencode, urlsplit
@@ -64,27 +66,25 @@ def render_purchase_welcome(intent: WelcomeEmailIntent, *, contact: WelcomeEmail
         raise ValueError('Invalid purchase welcome intent.') from None
     greeting = f'Olá, {intent.customer_name}!' if intent.customer_name else 'Olá!'
     url = contact.activation_url()
-    subject = 'Compra aprovada — boas-vindas ao Dominando Animação'
-    paragraphs = [
-        'Sua compra foi aprovada. Boas-vindas ao Dominando Animação!',
-        'Seu acesso ao portal precisa ser liberado manualmente pelo administrador.',
-        'Para solicitar a liberação, entre em contato pelo WhatsApp e informe o e-mail utilizado na compra.',
-    ]
-    text = '\n\n'.join([greeting, *paragraphs,
-        'Solicitar liberação no WhatsApp: ' + url, 'Dominando Animação'])
-    html = '''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Boas-vindas ao Dominando Animação</title>
-<style>@media screen and (max-width:600px){.card{padding:24px!important}}
-.activation:hover{background-color:#33e8ff!important}</style></head>
-<body style="margin:0;padding:0;background-color:#050913;color:#ffffff;font-family:Arial,Helvetica,sans-serif">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#050913"><tr><td align="center" style="padding:32px 12px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#141b2d;border:1px solid #26344c;border-radius:16px">
-<tr><td class="card" style="padding:40px">
-<p style="color:#00e0ff;font-size:13px;letter-spacing:2px;font-weight:bold">DOMINANDO ANIMAÇÃO</p>
-<h1 style="color:#ffffff;font-size:26px;line-height:1.3">''' + escape(greeting) + '</h1>'
-    html += ''.join('<p style="color:#a0b3d0;font-size:16px;line-height:1.65">' + escape(p) + '</p>' for p in paragraphs)
-    html += '<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="padding:16px 0"><a class="activation" href="' + escape(url, quote=True) + '''" style="display:inline-block;background-color:#00e0ff;color:#050913;padding:16px 20px;border-radius:8px;font-size:16px;line-height:1.4;text-decoration:none;font-weight:bold">Solicitar liberação no WhatsApp</a></td></tr></table>
-<p style="color:#a0b3d0;font-size:14px;line-height:1.6">Dominando Animação<br>Conte com a nossa equipe para começar.</p>
-</td></tr></table></td></tr></table></body></html>'''
+    subject = 'Compra aprovada! Bem-vindo ao Dominando Animação'
+    preheader = 'Sua compra foi confirmada. Saiba como solicitar a ativação do seu acesso.'
+    text = '\n\n'.join([
+        greeting,
+        'Sua compra foi aprovada com sucesso!',
+        'Seja muito bem-vindo ao Dominando Animação!\nEstamos muito felizes em ter você com a gente.',
+        'Seu cadastro já foi registrado em nosso sistema e agora falta apenas um passo para começar sua jornada conosco.',
+        'Vamos ativar seu acesso ao portal?',
+        'A liberação é realizada pela nossa equipe.',
+        'Para solicitar sua ativação, clique no botão abaixo e inicie uma conversa pelo WhatsApp.',
+        'Solicitar ativação no WhatsApp: ' + url,
+        'Se o botão não abrir, acesse o WhatsApp por este link: ' + url,
+        'Nossa equipe dará continuidade à liberação do seu acesso após o contato.',
+        'Se você já conversou conosco e solicitou a ativação, não é necessário fazer uma nova solicitação.',
+        'Nos vemos em breve!\nEquipe Dominando Animação',
+        'Este é um e-mail automático enviado após a confirmação da sua compra.',
+    ])
+    template = Path(__file__).resolve().parents[1] / 'templates' / 'purchase_welcome.html'
+    html = Template(template.read_text(encoding='utf-8')).substitute(
+        subject=escape(subject), preheader=escape(preheader),
+        greeting=escape(greeting), whatsapp_url=escape(url, quote=True))
     return RenderedWelcomeEmail(intent.recipient, subject, html, text)

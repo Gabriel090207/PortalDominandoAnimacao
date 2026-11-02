@@ -69,7 +69,7 @@ def test_reserve_payload_acceptance_no_repeat_and_manual_activation(setup,caplog
     message=json.loads(requests[0].content)
     assert set(message)=={'from','to','subject','html','text'}
     assert message['from']=='mail@example.com' and message['to']==['buyer@example.com']
-    assert 'liberado manualmente' in message['text'] and 'https://wa.me/15555550123?' in message['html']
+    assert 'A liberação é realizada pela nossa equipe.' in message['text'] and 'https://wa.me/15555550123?' in message['html']
     assert requests[0].url==httpx.URL('https://api.resend.com/emails') and requests[0].method=='POST'
     assert requests[0].headers['Authorization']=='Bearer re_synthetic_test_secret'
     assert requests[0].headers['Idempotency-Key']==resend_idempotency_key(identifier)
