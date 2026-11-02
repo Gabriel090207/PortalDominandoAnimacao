@@ -1,3 +1,5 @@
+> Histórico do PASSO 97.22. O modo geral foi posteriormente autorizado no PASSO 97.26; consulte [RESEND_GENERAL_RELEASE.md](RESEND_GENERAL_RELEASE.md) para a configuração atual.
+
 # PASSO 97.22 — bootstrap público Resend, somente audiência de teste
 
 A entrada continua `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.

@@ -62,7 +62,7 @@ def classify_commercial_event(payload, *, timezone_name: str | None) -> Commerci
         reasons.add(Reason.INVALID_SALE_ID)
     if charge is None:
         reasons.add(Reason.INVALID_CHARGE_NUMBER)
-    if data.get('charge_frequency') != 'MONTHLY':
+    if data.get('charge_frequency') not in ('MONTHLY', 'ANNUALLY'):
         reasons.add(Reason.FREQUENCY_NOT_AUTHORIZED)
     customer = payload.get('customer')
     email = None
@@ -113,12 +113,12 @@ def classify_commercial_event(payload, *, timezone_name: str | None) -> Commerci
     subscription_id = digest(['kirvano-subscription', COMMERCIAL_IDENTITY_VERSION, SOURCE_SCOPE, sale_id])
     if cancellation:
         return CommercialResult(CommercialClassification.ELIGIBLE, (), CancellationCandidate(
-            email, sale_id, charge, 'MONTHLY', AUTHORIZED_PRODUCT_ID, offer_id,
+            email, sale_id, charge, data['charge_frequency'], AUTHORIZED_PRODUCT_ID, offer_id,
             SOURCE_SCOPE, subscription_id,
         ))
     purchase_id = digest(['kirvano-charge', COMMERCIAL_IDENTITY_VERSION, SOURCE_SCOPE, sale_id, charge])
     return CommercialResult(CommercialClassification.ELIGIBLE, (), CommercialCandidate(
-        email, sale_id, charge, 'MONTHLY', AUTHORIZED_PRODUCT_ID, offer_id,
+        email, sale_id, charge, data['charge_frequency'], AUTHORIZED_PRODUCT_ID, offer_id,
         start, end, SOURCE_SCOPE, subscription_id, purchase_id,
         customer_name=optional_customer_name(customer.get('name')),
     ))

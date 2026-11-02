@@ -53,10 +53,13 @@ def load_purchase_welcome_config(*, environ=None, env_file=_ENV_FILE):
             raise ValueError
         values = dict(dotenv_values(env_file, interpolate=False)) if env_file is not None else {}
         values.update(env)
-        # General release is intentionally NOT selectable by environment yet.
-        if values.get('PURCHASE_WELCOME_AUDIENCE_MODE') != 'test' or values.get('PURCHASE_WELCOME_TEST_AUTHORIZED') != 'true':
+        mode=values.get('PURCHASE_WELCOME_AUDIENCE_MODE')
+        if mode == 'all':
+            audience=WelcomeAudience('all')
+        elif mode == 'test' and values.get('PURCHASE_WELCOME_TEST_AUTHORIZED') == 'true':
+            audience=WelcomeAudience('test',SecretStr(normalize_email(values.get('PURCHASE_WELCOME_TEST_RECIPIENT'))))
+        else:
             raise ValueError
-        audience=WelcomeAudience('test',SecretStr(normalize_email(values.get('PURCHASE_WELCOME_TEST_RECIPIENT'))))
         return PurchaseWelcomeConfig(True, SecretStr(values.get('RESEND_API_KEY', '')),
             values.get('PURCHASE_WELCOME_FROM'),
             WelcomeEmailContact(values.get('PURCHASE_WELCOME_WHATSAPP_URL')),audience,

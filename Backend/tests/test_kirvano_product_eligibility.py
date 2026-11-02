@@ -69,3 +69,49 @@ def test_other_offer_cannot_rebind_existing_subscription(event):
     receive(client,changed)
     assert event_root(client,changed)['business_status']=='review_required'
     assert {k:v for k,v in client.data.items() if not k.startswith('kirvano_events/')}==before
+
+
+@pytest.mark.parametrize('frequency,interval,end',[('MONTHLY','monthly','2026-11-05 12:00:00'),('ANNUALLY','yearly','2027-10-05 12:00:00')])
+def test_confirmed_frequency_persists_dates_and_lifecycle(frequency,interval,end):
+    client=Client();data=payload();data['plan'].update(charge_frequency=frequency,next_charge_date=end)
+    data['products'][0]['offer_id']=NEW_OFFER
+    candidate=classify(data).candidate
+    assert candidate.charge_frequency==frequency
+    receive(client,data);receive(client,data)
+    welcome=copy.deepcopy(docs(client,'transactional_emails'))
+    assert len(welcome)==1
+    assert next(iter(docs(client,'subscriptions').values()))['interval']==interval
+    purchase=next(iter(docs(client,'purchases').values()))
+    assert purchase['valid_until']==candidate.valid_until and purchase['valid_from']==candidate.valid_from
+    assert next(iter(docs(client,'users').values()))['activation_status']=='pending'
+    renewed=renewal_payload();renewed['products'][0]['offer_id']=NEW_OFFER
+    renewed['plan']['charge_frequency']=frequency
+    if frequency=='ANNUALLY':
+        renewed['payment']['finished_at']='2027-10-05 12:00:00'
+        renewed['plan']['next_charge_date']='2028-10-05 12:00:00'
+    receive(client,renewed)
+    assert len(docs(client,'purchases'))==2
+    cancelled=cancellation_payload();cancelled['products'][0]['offer_id']=NEW_OFFER
+    cancelled['plan']['charge_frequency']=frequency;receive(client,cancelled)
+    assert next(iter(docs(client,'subscriptions').values()))['status']=='canceled'
+    for event in ('SALE_REFUNDED','SALE_CHARGEBACK','SUBSCRIPTION_EXPIRED'):
+        negative={**data,'event':event};receive(client,negative)
+        assert event_root(client,negative)['business_status']=='review_required'
+    assert docs(client,'transactional_emails')==welcome
+
+
+@pytest.mark.parametrize('event',['SUBSCRIPTION_RENEWED','SUBSCRIPTION_CANCELED'])
+def test_frequency_change_cannot_rebind_existing_subscription(event):
+    client=Client();receive(client,payload())
+    data=renewal_payload() if event=='SUBSCRIPTION_RENEWED' else cancellation_payload()
+    data['plan']['charge_frequency']='ANNUALLY'
+    before=copy.deepcopy({k:v for k,v in client.data.items() if not k.startswith('kirvano_events/')})
+    receive(client,data)
+    assert event_root(client,data)['business_status']=='review_required'
+    assert {k:v for k,v in client.data.items() if not k.startswith('kirvano_events/')}==before
+
+
+@pytest.mark.parametrize('frequency',['QUARTERLY','SEMIANNUALLY','YEARLY','unknown'])
+def test_unconfirmed_provider_labels_remain_in_review(frequency):
+    data=payload();data['plan']['charge_frequency']=frequency
+    assert classify(data).candidate is None

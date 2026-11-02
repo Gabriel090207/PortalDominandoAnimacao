@@ -6,7 +6,7 @@ import time
 from google.api_core.exceptions import Aborted
 from google.cloud import firestore
 
-from app.domain.kirvano_commercial import CancellationCandidate
+from app.domain.kirvano_commercial import CancellationCandidate, subscription_interval
 from app.domain.models import UserAccessState, Entitlement
 from app.domain.states import AccountStatus, ActivationStatus, CommercialStatus, EntitlementStatus, ResourceKey, SubscriptionInterval, KirvanoEventState
 from app.persistence.collections import CollectionName as C
@@ -207,7 +207,7 @@ def commercial_transaction(transaction, client, event, commercial, identity, can
             return finish('cancellation_subscription_missing')
         expected_binding = {'source_scope': candidate.source_scope, 'sale_id': candidate.sale_id,
                             'user_id': user_id, 'product_id': candidate.product_id,
-                            'offer_id': candidate.offer_id, 'interval': SubscriptionInterval.MONTHLY.value}
+                            'offer_id': candidate.offer_id, 'interval': subscription_interval(candidate.charge_frequency).value}
         if any(subscription[k] != v for k, v in expected_binding.items()):
             return finish('commercial_binding_mismatch')
         expected_application = {'operation': 'subscription_cancellation', 'policy_version': 1,
@@ -281,7 +281,7 @@ def commercial_transaction(transaction, client, event, commercial, identity, can
         return finish('renewal_subscription_missing')
     timestamp = firestore.SERVER_TIMESTAMP
     sub_data = {'schema_version':1,'identity_version':1,'source_scope':candidate.source_scope,'sale_id':candidate.sale_id,'user_id':user_id,
-                'product_id':candidate.product_id,'offer_id':candidate.offer_id,'interval':SubscriptionInterval.MONTHLY.value,
+                'product_id':candidate.product_id,'offer_id':candidate.offer_id,'interval':subscription_interval(candidate.charge_frequency).value,
                 'status':CommercialStatus.ACTIVE.value,'origin_event_id':event.logical_id,'created_at':timestamp}
     purchase_data = {'schema_version':1,'identity_version':1,'source_scope':candidate.source_scope,'subscription_id':candidate.subscription_id,'user_id':user_id,
                      'charge_number':candidate.charge_number,'product_id':candidate.product_id,'offer_id':candidate.offer_id,

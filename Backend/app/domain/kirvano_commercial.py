@@ -68,3 +68,10 @@ class CommercialResult:
     classification: CommercialClassification
     reason_codes: tuple[CommercialReason, ...]
     candidate: CommercialCandidate | CancellationCandidate | None = None
+
+
+def subscription_interval(charge_frequency):
+    """Confirmed provider labels only; never infer interval from dates or price."""
+    from app.domain.states import SubscriptionInterval
+    return {'MONTHLY': SubscriptionInterval.MONTHLY,
+            'ANNUALLY': SubscriptionInterval.YEARLY}[charge_frequency]

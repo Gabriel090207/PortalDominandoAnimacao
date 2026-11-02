@@ -11,6 +11,7 @@ from app.domain.welcome_audience import WelcomeAudience
 from app.domain.welcome_dispatch import WelcomeProviderResult
 from app.services.purchase_welcome_bootstrap import prepare_public_welcome
 from app.services.purchase_welcome_dispatch import PurchaseWelcomeDispatchService
+from app.services.purchase_welcome_email import WelcomeEmailConfigurationError
 from app.services.purchase_welcome_trigger import PurchaseWelcomeTrigger, WelcomeTriggerPolicy
 from app.persistence.welcome_emails_repository import WelcomeEmailsRepository
 from test_welcome_dispatch import setup, env, PROVIDER_ID, configuration
@@ -51,7 +52,7 @@ def test_incomplete_fails_closed_without_constructing_clients(missing):
     client.assert_not_called();provider.assert_not_called()
 
 
-@pytest.mark.parametrize('name,value',[('PURCHASE_WELCOME_AUDIENCE_MODE','all'),
+@pytest.mark.parametrize('name,value',[('PURCHASE_WELCOME_AUDIENCE_MODE','unknown'),
     ('PURCHASE_WELCOME_TEST_AUTHORIZED','false'),('PURCHASE_WELCOME_TEST_RECIPIENT','bad'),
     ('PURCHASE_WELCOME_NOT_BEFORE','2026-10-01T00:00:00'),('PURCHASE_WELCOME_RECOVERY_ENABLED','true'),
     ('FIREBASE_PROJECT_ID','demo-unsafe-project'),('FIRESTORE_EMULATOR_HOST','127.0.0.1:8080')])
@@ -176,3 +177,20 @@ def test_sdk_loading_emulator_flag_is_rechecked_before_installation(selected,mon
         return client
     assert not prepare_public_welcome(create_app(),environ=settings(),client_factory=get_client,provider_factory=factory)
     factory.assert_not_called()
+
+
+def test_general_mode_requires_no_test_credentials_and_stays_explicit(selected):
+    client,identifier,fake=selected
+    values=settings();values['PURCHASE_WELCOME_AUDIENCE_MODE']='all'
+    values.pop('PURCHASE_WELCOME_TEST_RECIPIENT');values.pop('PURCHASE_WELCOME_TEST_AUTHORIZED')
+    config=load_purchase_welcome_config(environ=values,env_file=None)
+    assert config.audience.mode=='all' and config.audience.recipient is None
+    assert config.audience.allows('first@example.com') and config.audience.allows('second@example.com')
+    assert not config.audience.allows('invalid')
+    assert prepare_public_welcome(create_app(),environ=values,client_factory=lambda:client,provider_factory=lambda _:fake)
+    for missing in ('PURCHASE_WELCOME_NOT_BEFORE','PURCHASE_WELCOME_AUDIENCE_MODE'):
+        broken={k:v for k,v in values.items() if k!=missing}
+        with pytest.raises(WelcomeEmailConfigurationError,match='configuration'):
+            load_purchase_welcome_config(environ=broken,env_file=None)
+    values.pop('PURCHASE_WELCOME_SEND_ENABLED')
+    assert load_purchase_welcome_config(environ=values,env_file=None) is None
